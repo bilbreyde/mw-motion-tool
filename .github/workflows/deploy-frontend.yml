@@ -20,7 +20,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup Node.js 24
+      - name: Setup Node.js 24  # re-trigger after SWA token update
         uses: actions/setup-node@v4
         with:
           node-version: '24'
