@@ -16,7 +16,6 @@ frontend/.env.local
 frontend/.env.production
 
 # Azure Functions
-backend/.funcignore
 bin/
 obj/
 
