@@ -1,7 +1,7 @@
 {
   "name": "mw-motion-tool-backend",
   "version": "1.0.0",
-  "description": "Azure Functions backend for MW Motion Tool",
+  "description": "Azure Functions backend for DW Motion Tool",
   "scripts": {
     "build": "tsc",
     "watch": "tsc --watch",

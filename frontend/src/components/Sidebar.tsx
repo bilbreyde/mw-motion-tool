@@ -15,7 +15,7 @@ export function Sidebar({ currentStep, completedSteps, blockedAtStep, onStepClic
     <aside className="sidebar">
       <div className="sidebar-header">
         <div className="sidebar-logo">ZONES</div>
-        <div className="sidebar-subtitle">Modern Workplace Motion Tool</div>
+        <div className="sidebar-subtitle">Digital Workplace Motion Tool</div>
       </div>
 
       <nav className="sidebar-steps">

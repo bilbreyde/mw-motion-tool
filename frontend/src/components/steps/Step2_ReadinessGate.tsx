@@ -93,12 +93,12 @@ export function Step2_ReadinessGate({ profile, readiness, onUpdate, onNext, onRo
             <div className="alert-title">Readiness Gate — BLOCKED</div>
             <div className="alert-body">
               {!readiness.autopilotReady && !readiness.intuneReady
-                ? 'Both Autopilot and Intune/MDM must be production-ready before proceeding with a standard Modern Workplace motion.'
+                ? 'Both Autopilot and Intune/MDM must be production-ready before proceeding with a standard Digital Workplace motion.'
                 : !readiness.autopilotReady
                 ? 'Windows Autopilot must be in production before standard provisioning can be scoped.'
                 : 'Intune/MDM must be in production before standard provisioning can be scoped.'}
               <br /><br />
-              <strong>Next step:</strong> Route this customer to Zones Modern Workplace Pro Services for
+              <strong>Next step:</strong> Route this customer to Zones Digital Workplace Pro Services for
               a readiness engagement. Pro Services will assess gaps, build the environment, and re-qualify
               for production motion.
             </div>
@@ -118,7 +118,7 @@ export function Step2_ReadinessGate({ profile, readiness, onUpdate, onNext, onRo
             <div className="alert-title">Readiness Gate — PASSED</div>
             <div className="alert-body">
               Both Autopilot and Intune/MDM are production-ready. This customer qualifies for the
-              standard Modern Workplace deployment motion. Proceeding to deployment model selection.
+              standard Digital Workplace deployment motion. Proceeding to deployment model selection.
             </div>
           </div>
 

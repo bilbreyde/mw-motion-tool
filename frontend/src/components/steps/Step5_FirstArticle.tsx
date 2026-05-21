@@ -52,7 +52,7 @@ export function Step5_FirstArticle({
         {firstArticle.loading ? null : (
           <p>
             {firstArticle.aiGuidance ||
-              `A First Article is required for all Modern Workplace engagements before production
+              `A First Article is required for all Digital Workplace engagements before production
               scale orders are placed. The first article validates the full provisioning workflow
               — image, enrollment, policy application, and user experience — on a small sample
               of devices.`}
@@ -64,7 +64,7 @@ export function Step5_FirstArticle({
         <div className="form-label">First Article Required?</div>
         <div className="alert-card alert-card--info" style={{ marginBottom: 16 }}>
           <div className="alert-body">
-            Per Zones Modern Workplace policy: a First Article is <strong>always required</strong>{' '}
+            Per Zones Digital Workplace policy: a First Article is <strong>always required</strong>{' '}
             before production-scale device orders. This is non-negotiable.
           </div>
         </div>

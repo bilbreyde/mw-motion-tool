@@ -64,7 +64,7 @@ export function ProServicesRoute({ profile, readiness, onReset }: Props) {
         <div className="form-label">Relevant Zones Services</div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 10 }}>
           {[
-            { name: 'Modern Workplace Readiness Assessment', desc: 'Gap analysis and remediation roadmap for Autopilot and Intune production readiness' },
+            { name: 'Digital Workplace Readiness Assessment', desc: 'Gap analysis and remediation roadmap for Autopilot and Intune production readiness' },
             { name: 'Intune Environment Build', desc: 'Tenant configuration, policy baseline, enrollment profile setup, compliance rules' },
             { name: 'Autopilot Configuration Service', desc: 'Autopilot profile creation, hardware hash enrollment, OOBE workflow testing' },
           ].map(s => (

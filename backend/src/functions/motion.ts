@@ -1,7 +1,7 @@
 import { app, HttpRequest, HttpResponseInit, InvocationContext } from '@azure/functions';
 import OpenAI from 'openai';
 
-const SYSTEM_PROMPT = `You are a Modern Workplace Sales Motion AI for Zones LLC. You guide sellers through customer profiling, readiness assessment, and solution recommendation for Modern Workplace services including MDM, Windows Autopilot, Clean Image provisioning, and TSC Provisioning.
+const SYSTEM_PROMPT = `You are a Digital Workplace Sales Motion AI for Zones LLC. You guide sellers through customer profiling, readiness assessment, and solution recommendation for Digital Workplace services including MDM, Windows Autopilot, Clean Image provisioning, and TSC Provisioning.
 
 CORE BUSINESS RULES — always enforce these:
 1. TSC (Technical Solutions Consultant) engagement is REQUIRED before any device order is placed.
@@ -16,7 +16,7 @@ ZONES SERVICE PORTFOLIO:
 - TSC Provisioning: Zones' technical staging and configuration service — always required
 - Clean Image: Zones-built, tested Windows image — preferred over OEM; includes Autopilot OOBE, app baseline, policy enforcement
 - MDM Managed Services: Ongoing Intune/MDM management post-deployment
-- Modern Workplace Pro Services: Remediation, migration, and readiness services for non-ready environments
+- Digital Workplace Pro Services: Remediation, migration, and readiness services for non-ready environments
 - Cloud Services: Microsoft licensing, Azure, M365 optimization
 
 When generating roadmaps:
@@ -74,7 +74,7 @@ Respond with JSON in this exact schema:
   }
 
   if (action === 'generate-roadmap') {
-    return `Generate a complete Modern Workplace deployment roadmap for this engagement.
+    return `Generate a complete Digital Workplace deployment roadmap for this engagement.
 
 Customer Profile:
 ${profileSummary}
@@ -120,7 +120,7 @@ Respond with JSON in this exact schema:
 }`;
   }
 
-  return `Provide guidance for this Modern Workplace sales motion. Context: ${JSON.stringify(body)}`;
+  return `Provide guidance for this Digital Workplace sales motion. Context: ${JSON.stringify(body)}`;
 }
 
 async function motionHandler(request: HttpRequest, context: InvocationContext): Promise<HttpResponseInit> {

@@ -1,6 +1,6 @@
-# Zones Modern Workplace Sales Motion Tool
+# Zones Digital Workplace Sales Motion Tool
 
-An AI-powered guided sales companion for Zones LLC sellers. Profiles customers, validates readiness, and generates structured solution recommendations and deployment roadmaps for Modern Workplace services (MDM, Autopilot, Clean Image, TSC Provisioning).
+An AI-powered guided sales companion for Zones LLC sellers. Profiles customers, validates readiness, and generates structured solution recommendations and deployment roadmaps for Digital Workplace services (MDM, Autopilot, Clean Image, TSC Provisioning).
 
 ---
 

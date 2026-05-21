@@ -80,7 +80,7 @@ export function Step6_RoadmapOutput({ state, onUpdateRoadmap, onReset }: Props) 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24 }}>
         <div>
           <h2 style={{ color: 'var(--color-text-primary)', marginBottom: 4 }}>
-            Modern Workplace Roadmap
+            Digital Workplace Roadmap
           </h2>
           <p style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)', margin: 0 }}>
             {customerProfile.customerName} — Generated {new Date().toLocaleDateString('en-US', { dateStyle: 'long' })}
