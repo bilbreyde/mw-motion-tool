@@ -1,3 +1,15 @@
+# Deploy Backend → Azure Functions
+#
+# REQUIRED SECRET: AZURE_CREDENTIALS
+# Generate with:
+#   az ad sp create-for-rbac \
+#     --name "mw-motion-tool-deploy" \
+#     --role contributor \
+#     --scopes /subscriptions/7d70637f-bd34-4728-b41e-5a5c9f652d5d/resourceGroups/rg-mw-motion-tool \
+#     --sdk-auth
+# Paste the full JSON output as the AZURE_CREDENTIALS secret at:
+#   https://github.com/bilbreyde/mw-motion-tool/settings/secrets/actions
+
 name: Deploy Backend → Azure Functions
 
 on:
@@ -10,11 +22,12 @@ on:
 
 env:
   AZURE_FUNCTIONAPP_NAME: func-mw-motion-tool
+  AZURE_RESOURCE_GROUP: rg-mw-motion-tool
   NODE_VERSION: '24'
 
 jobs:
   build-and-deploy:
-    runs-on: windows-latest  # matches Windows consumption plan target
+    runs-on: windows-latest
 
     steps:
       - uses: actions/checkout@v4
@@ -26,7 +39,7 @@ jobs:
           cache: 'npm'
           cache-dependency-path: backend/package-lock.json
 
-      - name: Install all dependencies
+      - name: Install dependencies
         working-directory: backend
         run: npm ci
 
@@ -34,14 +47,32 @@ jobs:
         working-directory: backend
         run: npm run build
 
-      - name: Prune dev dependencies before packaging
+      - name: Prune dev dependencies
         working-directory: backend
-        run: npm prune --production
+        run: npm prune --omit=dev
+
+      - name: Zip backend contents
+        shell: pwsh
+        run: Compress-Archive -Path backend\* -DestinationPath backend.zip
+
+      - name: Azure Login
+        shell: pwsh
+        env:
+          AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
+        run: |
+          $creds = $env:AZURE_CREDENTIALS | ConvertFrom-Json
+          az login --service-principal `
+            --username $creds.clientId `
+            --password $creds.clientSecret `
+            --tenant $creds.tenantId `
+            --output none
+          az account set --subscription $creds.subscriptionId --output none
 
       - name: Deploy to Azure Functions
-        uses: Azure/functions-action@v1
-        with:
-          app-name: ${{ env.AZURE_FUNCTIONAPP_NAME }}
-          package: backend
-          publish-profile: ${{ secrets.AZURE_FUNCTIONAPP_PUBLISH_PROFILE }}
-          respect-funcignore: true
+        shell: pwsh
+        run: |
+          az functionapp deploy `
+            --name ${{ env.AZURE_FUNCTIONAPP_NAME }} `
+            --resource-group ${{ env.AZURE_RESOURCE_GROUP }} `
+            --src-path backend.zip `
+            --type zip
