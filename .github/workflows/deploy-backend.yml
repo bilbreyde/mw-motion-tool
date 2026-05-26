@@ -56,17 +56,9 @@ jobs:
         run: Compress-Archive -Path backend\* -DestinationPath backend.zip
 
       - name: Azure Login
-        shell: pwsh
-        env:
-          AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
-        run: |
-          $creds = $env:AZURE_CREDENTIALS | ConvertFrom-Json
-          az login --service-principal `
-            --username $creds.clientId `
-            --password $creds.clientSecret `
-            --tenant $creds.tenantId `
-            --output none
-          az account set --subscription $creds.subscriptionId --output none
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
 
       - name: Deploy to Azure Functions
         shell: pwsh
