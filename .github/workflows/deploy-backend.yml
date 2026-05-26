@@ -9,17 +9,17 @@ on:
   workflow_dispatch:
 
 env:
-  AZURE_FUNCTIONAPP_NAME: func-mw-motion-tool   # change if you name the Function App differently
+  AZURE_FUNCTIONAPP_NAME: func-mw-motion-tool
   NODE_VERSION: '24'
 
 jobs:
   build-and-deploy:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest  # matches Windows consumption plan target
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup Node.js ${{ env.NODE_VERSION }}  # trigger
+      - name: Setup Node.js ${{ env.NODE_VERSION }}
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
