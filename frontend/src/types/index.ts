@@ -1,3 +1,5 @@
+export type DiscoveryMode = 'live' | 'validation';
+
 export type Industry =
   | 'healthcare'
   | 'financial-services'
@@ -9,27 +11,31 @@ export type Industry =
   | 'technology'
   | 'other';
 
-export type EnvironmentType = 'cloud-only' | 'hybrid' | 'on-premise';
+export type EntraJoinType = 'azure-ad-join' | 'hybrid-aadj' | 'ad-ds-only';
+export type CoManagementStatus = 'intune-only' | 'co-managed' | 'configmgr-only' | 'none';
+export type AutopilotProfileType = 'user-driven-aadj' | 'user-driven-haadj' | 'pre-provisioning' | 'self-deploying';
 export type MdmPlatform = 'intune' | 'jamf' | 'workspace-one' | 'none' | 'other';
 export type DeviceVolume = '1-50' | '51-250' | '251-1000' | '1000+';
 export type DeploymentTimeline = 'immediate' | '1-3months' | '3-6months' | '6months+';
 export type PrimaryOs = 'windows' | 'mac' | 'mixed';
 export type ImageType = 'clean-image' | 'oem-ready';
 export type ProvisioningModel = 'pre-provisioning' | 'user-driven' | 'hybrid';
-export type Owner = 'Seller' | 'DW SA' | 'TSC' | 'Cloud Services' | 'Customer';
+export type Owner = 'SA' | 'TSC' | 'Cloud Services' | 'Customer' | 'Account Team';
 
 export interface CustomerProfile {
   customerName: string;
   industry: Industry | null;
-  environmentType: EnvironmentType | null;
+  primaryOs: PrimaryOs | null;
+  entraJoinType: EntraJoinType | null;
+  coManagementStatus: CoManagementStatus | null;
   mdmPlatform: MdmPlatform | null;
   deviceVolume: DeviceVolume | null;
   deploymentTimeline: DeploymentTimeline | null;
-  primaryOs: PrimaryOs | null;
 }
 
 export interface ReadinessCheck {
   autopilotReady: boolean | null;
+  autopilotProfileType: AutopilotProfileType | null;
   intuneReady: boolean | null;
   routedToProServices: boolean;
 }
@@ -42,7 +48,7 @@ export interface DeploymentRecommendation {
 }
 
 export interface EngagementTriggers {
-  dwSaAssigned: boolean | null;
+  customerItPocConfirmed: boolean | null;
   tscAlignmentScheduled: boolean | null;
   cloudServicesEngaged: boolean | null;
 }
@@ -76,6 +82,8 @@ export interface RoadmapOutput {
 
 export interface MotionState {
   currentStep: number;
+  discoveryMode: DiscoveryMode | null;
+  unvalidatedFields: string[];
   customerProfile: CustomerProfile;
   readinessCheck: ReadinessCheck;
   deploymentRecommendation: DeploymentRecommendation;
@@ -88,6 +96,8 @@ export interface AiMotionRequest {
   step: number;
   action: 'recommend-deployment' | 'first-article-guidance' | 'generate-roadmap';
   customerProfile: CustomerProfile;
+  discoveryMode?: DiscoveryMode;
+  unvalidatedFields?: string[];
   readinessCheck?: ReadinessCheck;
   deploymentRecommendation?: DeploymentRecommendation;
   engagementTriggers?: EngagementTriggers;
@@ -106,10 +116,14 @@ export interface AiMotionResponse {
 }
 
 export const STEP_LABELS: Record<number, string> = {
-  1: 'Customer Profile',
+  1: 'Technical Discovery',
   2: 'Readiness Gate',
   3: 'Deployment Model',
   4: 'Engagement Triggers',
   5: 'First Article',
   6: 'Roadmap Output',
 };
+
+export function isFieldAnswered(value: unknown, fieldKey: string, unvalidatedFields: string[]): boolean {
+  return value !== null && value !== undefined || unvalidatedFields.includes(fieldKey);
+}

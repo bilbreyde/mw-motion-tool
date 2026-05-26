@@ -11,11 +11,11 @@ interface Props {
 
 function ownerClass(owner: Owner): string {
   const map: Record<Owner, string> = {
-    'Seller': 'owner--seller',
-    'DW SA': 'owner--dw-sa',
+    'SA': 'owner--seller',
     'TSC': 'owner--tsc',
     'Cloud Services': 'owner--cloud',
     'Customer': 'owner--customer',
+    'Account Team': 'owner--dw-sa',
   };
   return map[owner] ?? '';
 }
@@ -35,8 +35,26 @@ function groupByPhase(steps: RoadmapStep[]): Record<string, RoadmapStep[]> {
   return groups;
 }
 
+const FIELD_LABELS: Record<string, string> = {
+  'customerProfile.industry': 'Industry vertical',
+  'customerProfile.primaryOs': 'Primary OS platform',
+  'customerProfile.entraJoinType': 'Entra ID / directory join type',
+  'customerProfile.coManagementStatus': 'Co-management / ConfigMgr status',
+  'customerProfile.mdmPlatform': 'MDM platform',
+  'customerProfile.deviceVolume': 'Device volume',
+  'customerProfile.deploymentTimeline': 'Deployment timeline',
+  'readinessCheck.autopilotReady': 'Autopilot production status',
+  'readinessCheck.intuneReady': 'Intune compliance enforcement status',
+  'engagementTriggers.customerItPocConfirmed': 'Customer IT stakeholder confirmed',
+  'engagementTriggers.tscAlignmentScheduled': 'TSC alignment call',
+  'engagementTriggers.cloudServicesEngaged': 'Cloud Services licensing review',
+};
+
 export function Step6_RoadmapOutput({ state, onUpdateRoadmap, onReset }: Props) {
-  const { roadmapOutput, customerProfile, readinessCheck, deploymentRecommendation, engagementTriggers, firstArticle } = state;
+  const {
+    roadmapOutput, customerProfile, readinessCheck, deploymentRecommendation,
+    engagementTriggers, firstArticle, discoveryMode, unvalidatedFields
+  } = state;
 
   useEffect(() => {
     if (!roadmapOutput.aiSummary && !roadmapOutput.loading) {
@@ -45,6 +63,8 @@ export function Step6_RoadmapOutput({ state, onUpdateRoadmap, onReset }: Props) 
         step: 6,
         action: 'generate-roadmap',
         customerProfile,
+        discoveryMode: discoveryMode ?? 'live',
+        unvalidatedFields,
         readinessCheck,
         deploymentRecommendation,
         engagementTriggers,
@@ -68,10 +88,6 @@ export function Step6_RoadmapOutput({ state, onUpdateRoadmap, onReset }: Props) 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  function handlePrint() {
-    window.print();
-  }
-
   const grouped = groupByPhase(roadmapOutput.steps);
   const phases = PHASE_ORDER.filter(p => grouped[p]);
 
@@ -84,18 +100,46 @@ export function Step6_RoadmapOutput({ state, onUpdateRoadmap, onReset }: Props) 
           </h2>
           <p style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)', margin: 0 }}>
             {customerProfile.customerName} — Generated {new Date().toLocaleDateString('en-US', { dateStyle: 'long' })}
+            {discoveryMode === 'validation' && (
+              <span style={{ marginLeft: 12, color: 'var(--color-warning)', fontWeight: 600 }}>◎ Validation Mode</span>
+            )}
           </p>
         </div>
-        <div style={{ display: 'flex', gap: 8 }}>
-          <button className="btn-secondary" onClick={handlePrint} style={{ fontSize: '0.85rem', padding: '8px 16px' }}>
-            Print / Export PDF
-          </button>
-        </div>
+        <button className="btn-secondary" onClick={() => window.print()} style={{ fontSize: '0.85rem', padding: '8px 16px' }}>
+          Print / Export PDF
+        </button>
       </div>
+
+      {/* Unvalidated items — shown prominently before anything else */}
+      {unvalidatedFields.length > 0 && (
+        <div className="unvalidated-items-section">
+          <div className="unvalidated-items-header">
+            <span className="unvalidated-items-icon">⚠</span>
+            <span>
+              {unvalidatedFields.length} Unvalidated Item{unvalidatedFields.length > 1 ? 's' : ''} — Do not order until resolved
+            </span>
+          </div>
+          <p className="unvalidated-items-body">
+            The following fields were flagged as unvalidated during discovery. Each must be
+            confirmed directly with the customer's IT team before any device order is placed.
+            Return to the relevant step to update once confirmed.
+          </p>
+          <ul className="unvalidated-items-list">
+            {unvalidatedFields.map(fieldKey => (
+              <li key={fieldKey} className="unvalidated-item">
+                <span className="unvalidated-item-label">
+                  {FIELD_LABELS[fieldKey] ?? fieldKey}
+                </span>
+                <span className="unvalidated-item-action">Confirm with customer IT team before ordering</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       <ConversationalMessage loading={roadmapOutput.loading}>
         {roadmapOutput.loading ? null : (
-          <p>{roadmapOutput.aiSummary || 'Roadmap generated. Review the steps below and confirm with your DW SA before customer delivery.'}</p>
+          <p>{roadmapOutput.aiSummary || 'Roadmap generated. Review all steps and confirm with TSC before customer delivery.'}</p>
         )}
       </ConversationalMessage>
 
@@ -107,69 +151,58 @@ export function Step6_RoadmapOutput({ state, onUpdateRoadmap, onReset }: Props) 
                 <div className="sow-label">SOW Readiness Score</div>
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
                   <div className="sow-score">{roadmapOutput.sowReadinessScore}%</div>
-                  {roadmapOutput.sowReady ? (
+                  {roadmapOutput.sowReady && unvalidatedFields.length === 0 ? (
                     <span className="recommendation-badge badge--preferred">SOW Ready</span>
                   ) : (
-                    <span className="recommendation-badge badge--blocked">Not SOW Ready</span>
+                    <span className="recommendation-badge badge--blocked">
+                      {unvalidatedFields.length > 0 ? `${unvalidatedFields.length} Unvalidated` : 'Not SOW Ready'}
+                    </span>
                   )}
                 </div>
               </div>
-              <div style={{ textAlign: 'right', fontSize: '0.82rem', color: 'var(--color-text-muted)' }}>
-                <div>DW SA: {engagementTriggers.dwSaAssigned ? '✓' : '✗'}</div>
+              <div style={{ textAlign: 'right', fontSize: '0.82rem', color: 'var(--color-text-muted)', lineHeight: 1.8 }}>
+                <div>IT Stakeholder: {engagementTriggers.customerItPocConfirmed ? '✓' : '✗'}</div>
                 <div>TSC Aligned: {engagementTriggers.tscAlignmentScheduled ? '✓' : '✗'}</div>
                 <div>First Article: {firstArticle.required ? 'Required' : 'Waived'}</div>
                 <div>Cloud Services: {engagementTriggers.cloudServicesEngaged ? '✓' : '✗'}</div>
+                {unvalidatedFields.length > 0 && (
+                  <div style={{ color: 'var(--color-warning)' }}>Unvalidated: {unvalidatedFields.length}</div>
+                )}
               </div>
             </div>
             <div className="progress-bar-track">
-              <div
-                className="progress-bar-fill"
-                style={{ width: `${roadmapOutput.sowReadinessScore}%` }}
-              />
+              <div className="progress-bar-fill" style={{ width: `${roadmapOutput.sowReadinessScore}%` }} />
             </div>
           </div>
 
-          <div style={{ marginBottom: 16 }}>
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(3, 1fr)',
-              gap: 12,
-              marginBottom: 20,
-            }}>
-              <div style={{ background: 'var(--color-bg-surface)', borderRadius: 'var(--radius-md)', padding: '12px 16px', border: '1px solid var(--color-border)' }}>
-                <div style={{ fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.8px', color: 'var(--color-text-muted)', marginBottom: 4 }}>Image Type</div>
-                <div style={{ fontWeight: 600, color: 'var(--color-text-primary)' }}>
-                  {deploymentRecommendation.imageType === 'clean-image' ? 'Zones Clean Image' : 'OEM Ready Image'}
-                </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, marginBottom: 20 }}>
+            {[
+              {
+                label: 'Join Type',
+                value: customerProfile.entraJoinType
+                ? ({ 'azure-ad-join': 'Azure AD Join', 'hybrid-aadj': 'Hybrid AADJ', 'ad-ds-only': 'AD DS Only' } as Record<string, string>)[customerProfile.entraJoinType] ?? '—'
+                : '—',
+              },
+              {
+                label: 'Image Type',
+                value: deploymentRecommendation.imageType === 'clean-image' ? 'Zones Clean Image' : 'OEM Ready Image',
+              },
+              {
+                label: 'Device Volume',
+                value: `${customerProfile.deviceVolume ?? '—'} devices`,
+              },
+            ].map(({ label, value }) => (
+              <div key={label} style={{ background: 'var(--color-bg-surface)', borderRadius: 'var(--radius-md)', padding: '12px 16px', border: '1px solid var(--color-border)' }}>
+                <div style={{ fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.8px', color: 'var(--color-text-muted)', marginBottom: 4 }}>{label}</div>
+                <div style={{ fontWeight: 600, color: 'var(--color-text-primary)' }}>{value}</div>
               </div>
-              <div style={{ background: 'var(--color-bg-surface)', borderRadius: 'var(--radius-md)', padding: '12px 16px', border: '1px solid var(--color-border)' }}>
-                <div style={{ fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.8px', color: 'var(--color-text-muted)', marginBottom: 4 }}>Provisioning</div>
-                <div style={{ fontWeight: 600, color: 'var(--color-text-primary)', textTransform: 'capitalize' }}>
-                  {deploymentRecommendation.provisioningModel?.replace('-', ' ')}
-                </div>
-              </div>
-              <div style={{ background: 'var(--color-bg-surface)', borderRadius: 'var(--radius-md)', padding: '12px 16px', border: '1px solid var(--color-border)' }}>
-                <div style={{ fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.8px', color: 'var(--color-text-muted)', marginBottom: 4 }}>Device Volume</div>
-                <div style={{ fontWeight: 600, color: 'var(--color-text-primary)' }}>
-                  {customerProfile.deviceVolume} devices
-                </div>
-              </div>
-            </div>
+            ))}
           </div>
 
           {roadmapOutput.steps.length > 0 ? (
             phases.map(phase => (
               <div key={phase} style={{ marginBottom: 28 }}>
-                <h3 style={{
-                  color: 'var(--color-accent)',
-                  fontSize: '0.82rem',
-                  textTransform: 'uppercase',
-                  letterSpacing: '1px',
-                  marginBottom: 10,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 8,
-                }}>
+                <h3 style={{ color: 'var(--color-accent)', fontSize: '0.82rem', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 8 }}>
                   <span style={{ width: 16, height: 2, background: 'var(--color-accent)', display: 'inline-block' }} />
                   {phase}
                 </h3>
@@ -188,20 +221,17 @@ export function Step6_RoadmapOutput({ state, onUpdateRoadmap, onReset }: Props) 
                       {grouped[phase].map(step => (
                         <tr key={step.id}>
                           <td style={{ color: 'var(--color-text-primary)', fontWeight: 500 }}>{step.action}</td>
-                          <td>
-                            <span className={`owner-chip ${ownerClass(step.owner)}`}>{step.owner}</span>
-                          </td>
+                          <td><span className={`owner-chip ${ownerClass(step.owner)}`}>{step.owner}</span></td>
                           <td style={{ fontSize: '0.82rem' }}>{step.timeline}</td>
                           <td>
                             <span className={`status-dot ${statusClass(step.status)}`} />
                             <span style={{ fontSize: '0.8rem', textTransform: 'capitalize' }}>{step.status}</span>
                           </td>
                           <td>
-                            {step.sowRelevant ? (
-                              <span style={{ color: 'var(--color-success)', fontSize: '0.8rem' }}>Yes</span>
-                            ) : (
-                              <span style={{ color: 'var(--color-text-muted)', fontSize: '0.8rem' }}>—</span>
-                            )}
+                            {step.sowRelevant
+                              ? <span style={{ color: 'var(--color-success)', fontSize: '0.8rem' }}>Yes</span>
+                              : <span style={{ color: 'var(--color-text-muted)', fontSize: '0.8rem' }}>—</span>
+                            }
                           </td>
                         </tr>
                       ))}
@@ -213,8 +243,8 @@ export function Step6_RoadmapOutput({ state, onUpdateRoadmap, onReset }: Props) 
           ) : (
             <div className="alert-card alert-card--warning">
               <div className="alert-body">
-                Roadmap steps could not be generated. Check your AI service configuration or proceed
-                manually using the engagement triggers above.
+                Roadmap steps could not be generated. Check your AI service configuration
+                or proceed manually using the engagement triggers above.
               </div>
             </div>
           )}
@@ -232,7 +262,7 @@ export function Step6_RoadmapOutput({ state, onUpdateRoadmap, onReset }: Props) 
       )}
 
       <div className="step-actions">
-        {!roadmapOutput.loading && <button className="btn-secondary" onClick={handlePrint}>Print Roadmap</button>}
+        {!roadmapOutput.loading && <button className="btn-secondary" onClick={() => window.print()}>Print Roadmap</button>}
         <button className="btn-secondary" onClick={onReset}>New Engagement</button>
       </div>
     </div>

@@ -1,8 +1,10 @@
+import type { DiscoveryMode } from '../types';
 import { STEP_LABELS } from '../types';
 
 interface SidebarProps {
   currentStep: number;
   completedSteps: Set<number>;
+  discoveryMode: DiscoveryMode | null;
   blockedAtStep?: number;
   onStepClick: (step: number) => void;
   onReset: () => void;
@@ -10,12 +12,17 @@ interface SidebarProps {
 
 const CHECK = '✓';
 
-export function Sidebar({ currentStep, completedSteps, blockedAtStep, onStepClick, onReset }: SidebarProps) {
+export function Sidebar({ currentStep, completedSteps, discoveryMode, blockedAtStep, onStepClick, onReset }: SidebarProps) {
   return (
     <aside className="sidebar">
       <div className="sidebar-header">
         <div className="sidebar-logo">ZONES</div>
         <div className="sidebar-subtitle">Digital Workplace Motion Tool</div>
+        {discoveryMode && (
+          <div className={`discovery-mode-badge ${discoveryMode === 'live' ? 'discovery-mode-badge--live' : 'discovery-mode-badge--validation'}`}>
+            {discoveryMode === 'live' ? '◉ Live Discovery' : '◎ Validation Mode'}
+          </div>
+        )}
       </div>
 
       <nav className="sidebar-steps">
@@ -63,7 +70,7 @@ export function Sidebar({ currentStep, completedSteps, blockedAtStep, onStepClic
 
       <div className="sidebar-footer">
         <button className="reset-btn" onClick={onReset}>
-          Start New Engagement
+          New Engagement
         </button>
       </div>
     </aside>

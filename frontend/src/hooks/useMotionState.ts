@@ -1,19 +1,23 @@
 import { useState, useCallback } from 'react';
-import type { MotionState, CustomerProfile, ReadinessCheck, DeploymentRecommendation, EngagementTriggers, FirstArticle } from '../types';
+import type { MotionState, DiscoveryMode, CustomerProfile, ReadinessCheck, DeploymentRecommendation, EngagementTriggers, FirstArticle } from '../types';
 
 const initialState: MotionState = {
   currentStep: 1,
+  discoveryMode: null,
+  unvalidatedFields: [],
   customerProfile: {
     customerName: '',
     industry: null,
-    environmentType: null,
+    primaryOs: null,
+    entraJoinType: null,
+    coManagementStatus: null,
     mdmPlatform: null,
     deviceVolume: null,
     deploymentTimeline: null,
-    primaryOs: null,
   },
   readinessCheck: {
     autopilotReady: null,
+    autopilotProfileType: null,
     intuneReady: null,
     routedToProServices: false,
   },
@@ -24,7 +28,7 @@ const initialState: MotionState = {
     loading: false,
   },
   engagementTriggers: {
-    dwSaAssigned: null,
+    customerItPocConfirmed: null,
     tscAlignmentScheduled: null,
     cloudServicesEngaged: null,
   },
@@ -47,6 +51,26 @@ const initialState: MotionState = {
 
 export function useMotionState() {
   const [state, setState] = useState<MotionState>(initialState);
+
+  const setDiscoveryMode = useCallback((mode: DiscoveryMode) => {
+    setState(prev => ({ ...prev, discoveryMode: mode }));
+  }, []);
+
+  const markUnvalidated = useCallback((fieldKey: string) => {
+    setState(prev => ({
+      ...prev,
+      unvalidatedFields: prev.unvalidatedFields.includes(fieldKey)
+        ? prev.unvalidatedFields
+        : [...prev.unvalidatedFields, fieldKey],
+    }));
+  }, []);
+
+  const clearUnvalidated = useCallback((fieldKey: string) => {
+    setState(prev => ({
+      ...prev,
+      unvalidatedFields: prev.unvalidatedFields.filter(f => f !== fieldKey),
+    }));
+  }, []);
 
   const goToStep = useCallback((step: number) => {
     setState(prev => ({ ...prev, currentStep: step }));
@@ -102,6 +126,9 @@ export function useMotionState() {
 
   return {
     state,
+    setDiscoveryMode,
+    markUnvalidated,
+    clearUnvalidated,
     goToStep,
     nextStep,
     updateCustomerProfile,

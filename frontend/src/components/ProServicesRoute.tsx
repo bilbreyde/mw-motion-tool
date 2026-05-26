@@ -8,8 +8,8 @@ interface Props {
 
 export function ProServicesRoute({ profile, readiness, onReset }: Props) {
   const gaps: string[] = [];
-  if (!readiness.autopilotReady) gaps.push('Windows Autopilot — not in production');
-  if (!readiness.intuneReady) gaps.push('Intune/MDM — not in production');
+  if (!readiness.autopilotReady) gaps.push('Windows Autopilot — not production-active (no assigned enrollment profiles or devices not enrolling)');
+  if (!readiness.intuneReady) gaps.push('Intune / MDM — compliance policies not enforced in production');
 
   return (
     <div className="step-container">
@@ -26,23 +26,23 @@ export function ProServicesRoute({ profile, readiness, onReset }: Props) {
           letterSpacing: '0.8px',
           marginBottom: 16,
         }}>
-          Readiness Gate — Routed to Pro Services
+          Readiness Gate — Blocked
         </span>
         <h2 style={{ color: 'var(--color-text-primary)', marginBottom: 8 }}>
-          {profile.customerName || 'This customer'} needs a readiness engagement
+          {profile.customerName || 'This customer'} requires a readiness engagement
         </h2>
         <p style={{ color: 'var(--color-text-secondary)' }}>
-          Based on the answers provided, this customer is not yet ready for a standard Modern
-          Workplace deployment motion. This is normal — the right play is a Zones Pro Services
-          readiness engagement to close the gaps.
+          Based on the technical discovery, this customer does not meet the minimum readiness
+          criteria for a standard Digital Workplace provisioning motion. Document the gaps below
+          and recommend a Zones Pro Services readiness engagement to the account team.
         </p>
       </div>
 
       <div className="recommendation-card" style={{ marginBottom: 24 }}>
         <div className="recommendation-header">
-          <span className="recommendation-badge badge--blocked">Readiness Gaps</span>
+          <span className="recommendation-badge badge--blocked">Technical Gaps Identified</span>
         </div>
-        <ul style={{ paddingLeft: 18, color: 'var(--color-text-secondary)', lineHeight: 2.2 }}>
+        <ul style={{ paddingLeft: 18, lineHeight: 2.2 }}>
           {gaps.map((gap, i) => (
             <li key={i} style={{ fontSize: '0.9rem', color: 'var(--color-danger)' }}>{gap}</li>
           ))}
@@ -50,23 +50,31 @@ export function ProServicesRoute({ profile, readiness, onReset }: Props) {
       </div>
 
       <div className="alert-card alert-card--info">
-        <div className="alert-title">Recommended Path — Pro Services Readiness Engagement</div>
+        <div className="alert-title">SA Recommended Path — Pro Services Readiness Engagement</div>
         <div className="alert-body" style={{ lineHeight: 2 }}>
-          <strong>Step 1:</strong> Contact your DW SA to initiate a Pro Services readiness scoping call<br />
-          <strong>Step 2:</strong> Pro Services will assess the Autopilot and/or Intune environment<br />
-          <strong>Step 3:</strong> Zones will deliver the readiness engagement (Autopilot setup, Intune
-          enrollment configuration, policy baseline)<br />
-          <strong>Step 4:</strong> Once production-ready, re-run this Motion Tool to begin standard deployment scoping
+          <strong>Step 1:</strong> Document these technical gaps in the opportunity notes and notify the account team<br />
+          <strong>Step 2:</strong> Recommend a Zones Pro Services readiness scoping call — include the gap details identified in this discovery<br />
+          <strong>Step 3:</strong> Pro Services will assess the environment, build the readiness plan, and deliver the engagement<br />
+          <strong>Step 4:</strong> Once Autopilot and Intune are production-ready, re-run this Motion Tool to begin standard deployment scoping
         </div>
       </div>
 
       <div style={{ marginTop: 24 }}>
-        <div className="form-label">Relevant Zones Services</div>
+        <div className="form-label">Zones Pro Services — Relevant Offerings</div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 10 }}>
           {[
-            { name: 'Digital Workplace Readiness Assessment', desc: 'Gap analysis and remediation roadmap for Autopilot and Intune production readiness' },
-            { name: 'Intune Environment Build', desc: 'Tenant configuration, policy baseline, enrollment profile setup, compliance rules' },
-            { name: 'Autopilot Configuration Service', desc: 'Autopilot profile creation, hardware hash enrollment, OOBE workflow testing' },
+            {
+              name: 'Digital Workplace Readiness Assessment',
+              desc: 'SA-led gap analysis and remediation roadmap for Autopilot and Intune production readiness',
+            },
+            {
+              name: 'Intune Environment Build',
+              desc: 'Tenant configuration, enrollment profiles, compliance policy baseline, and co-management workload migration',
+            },
+            {
+              name: 'Autopilot Configuration Service',
+              desc: 'Autopilot profile creation, hardware hash enrollment, OOBE workflow testing, and Entra ID registration validation',
+            },
           ].map(s => (
             <div key={s.name} style={{
               background: 'var(--color-bg-surface)',
@@ -82,7 +90,7 @@ export function ProServicesRoute({ profile, readiness, onReset }: Props) {
       </div>
 
       <div className="step-actions" style={{ marginTop: 32 }}>
-        <button className="btn-secondary" onClick={onReset}>Start New Engagement</button>
+        <button className="btn-secondary" onClick={onReset}>New Engagement</button>
       </div>
     </div>
   );
