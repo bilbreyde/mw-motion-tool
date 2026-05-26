@@ -20,7 +20,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup Node.js 24  # trigger
+      - name: Setup Node.js 24
         uses: actions/setup-node@v4
         with:
           node-version: '24'
@@ -35,23 +35,14 @@ jobs:
         working-directory: frontend
         run: npm run build
         env:
-          # Injected at build time so the browser bundle has the correct API URL.
-          # Set VITE_API_BASE_URL in GitHub Secrets to your Function App URL,
-          # e.g. https://func-mw-motion-tool.azurewebsites.net
           VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL }}
 
       - name: Deploy to Azure Static Web Apps
-        uses: Azure/static-web-apps-deploy@v1
-        with:
-          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
-          action: upload
-          # We pre-built above; point directly at the dist folder.
-          app_location: frontend/dist
-          output_location: ''
-          skip_app_build: true
+        run: |
+          npx @azure/static-web-apps-cli deploy frontend/dist \
+            --deployment-token "${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}" \
+            --env production
 
-  # Cleans up the preview environment when a PR is closed.
   close-pr-environment:
     if: github.event_name == 'pull_request' && github.event.action == 'closed'
     runs-on: ubuntu-latest
@@ -59,7 +50,10 @@ jobs:
 
     steps:
       - name: Close staging environment
-        uses: Azure/static-web-apps-deploy@v1
-        with:
-          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
-          action: close
+        run: |
+          npx @azure/static-web-apps-cli deploy \
+            --deployment-token "${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}" \
+            --env "${{ github.event.pull_request.number }}" \
+            --output-location ""
+        env:
+          SWA_CLI_DEPLOY_DRY_RUN: "false"
