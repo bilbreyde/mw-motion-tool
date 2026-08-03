@@ -14,7 +14,15 @@ CORE BUSINESS RULES — always enforce these:
 2. Zones Clean Image is ALWAYS preferred over OEM Ready Image for build consistency, auditability, and Autopilot readiness.
 3. Windows Autopilot enrollment is REQUIRED for all modern provisioning workflows. If not in production, the engagement does not qualify for standard motion.
 4. First Article testing is REQUIRED before production-scale device orders. The SA owns the acceptance criteria definition — TSC executes against it.
-5. If Autopilot OR Intune/MDM is NOT production-ready, the engagement must be routed to Pro Services for a readiness engagement. Do not scope provisioning services until readiness gaps are remediated.
+5. STEP 2 READINESS GATE — these are the official Zones Digital Workplace qualification criteria for Autopilot pre-provisioning. ALL SEVEN must be Yes to qualify for a standard provisioning motion:
+   (1) Is Intune production-ready?
+   (2) Is Autopilot configured and tested?
+   (3) Are enrollment profiles defined?
+   (4) Are Group Tags defined?
+   (5) Are required applications packaged and tested?
+   (6) Has a first-article deployment been planned?
+   (7) Has ownership been assigned for ongoing Intune management?
+   If ANY of the seven is No, the engagement must be routed to the Autopilot/Intune Professional Services readiness engagement. No exceptions — do not scope provisioning services until every gap is remediated.
 6. The SA's role is to define the technical scope, validate the environment, and hand off to TSC for execution — not to manage deployment operations directly.
 
 ZONES SERVICE PORTFOLIO:
@@ -44,6 +52,23 @@ ROADMAP GENERATION RULES:
 - Unvalidated fields generate "required" roadmap items in the Pre-Sales Alignment phase
 - Return valid JSON matching the schema exactly`;
 
+const READINESS_GATE_LABELS: [string, string][] = [
+  ['intuneProductionReady', 'Is Intune production-ready?'],
+  ['autopilotConfiguredTested', 'Is Autopilot configured and tested?'],
+  ['enrollmentProfilesDefined', 'Are enrollment profiles defined?'],
+  ['groupTagsDefined', 'Are Group Tags defined?'],
+  ['applicationsPackagedTested', 'Are required applications packaged and tested?'],
+  ['firstArticlePlanned', 'Has a first-article deployment been planned?'],
+  ['ownershipAssigned', 'Has ownership been assigned for ongoing Intune management?'],
+];
+
+function formatReadinessGates(readinessCheck: Record<string, unknown> | undefined): string {
+  if (!readinessCheck) return '- (no readiness data provided)';
+  return READINESS_GATE_LABELS
+    .map(([key, label]) => `- ${label} ${readinessCheck[key]}`)
+    .join('\n');
+}
+
 function buildUserPrompt(body: Record<string, unknown>): string {
   const {
     action, customerProfile, discoveryMode, unvalidatedFields,
@@ -65,10 +90,9 @@ Customer Technical Profile:
 ${profileSummary}
 ${modeNote}${uvFields}
 
-Readiness Status:
-- Autopilot Production-Active: ${(readinessCheck as Record<string, unknown>)?.autopilotReady}
+Readiness Status (Step 2 — 7-gate qualification):
+${formatReadinessGates(readinessCheck as Record<string, unknown>)}
 - Autopilot Profile Type: ${(readinessCheck as Record<string, unknown>)?.autopilotProfileType ?? 'not specified'}
-- Intune Compliance Enforcement: ${(readinessCheck as Record<string, unknown>)?.intuneReady}
 
 Consider the Entra join type, co-management status, and Autopilot profile type in your recommendation.
 Flag any technical risks or prerequisites that must be addressed before this deployment model can be executed.
@@ -95,6 +119,9 @@ Deployment Model Selected:
 - Autopilot Profile: ${(readinessCheck as Record<string, unknown>)?.autopilotProfileType ?? 'not specified'}
 - Entra Join Type: ${(customerProfile as Record<string, unknown>)?.entraJoinType}
 
+Readiness Status (Step 2 — 7-gate qualification):
+${formatReadinessGates(readinessCheck as Record<string, unknown>)}
+
 Engagement Status:
 - Customer IT POC Confirmed: ${(engagementTriggers as Record<string, unknown>)?.customerItPocConfirmed}
 - TSC Alignment Scheduled: ${(engagementTriggers as Record<string, unknown>)?.tscAlignmentScheduled}
@@ -118,10 +145,9 @@ Customer Technical Profile:
 ${profileSummary}
 ${modeNote}${uvFields}
 
-Readiness:
-- Autopilot Production-Active: ${(readinessCheck as Record<string, unknown>)?.autopilotReady}
+Readiness Status (Step 2 — 7-gate qualification):
+${formatReadinessGates(readinessCheck as Record<string, unknown>)}
 - Autopilot Profile Type: ${(readinessCheck as Record<string, unknown>)?.autopilotProfileType ?? 'not specified'}
-- Intune Compliance: ${(readinessCheck as Record<string, unknown>)?.intuneReady}
 
 Deployment Model:
 - Image Type: ${(deploymentRecommendation as Record<string, unknown>)?.imageType}

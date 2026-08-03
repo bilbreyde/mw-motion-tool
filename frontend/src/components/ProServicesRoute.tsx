@@ -1,15 +1,25 @@
-import type { CustomerProfile } from '../types';
+import type { CustomerProfile, ReadinessCheck } from '../types';
 
 interface Props {
   profile: CustomerProfile;
-  readiness: { autopilotReady: boolean | null; intuneReady: boolean | null };
+  readiness: ReadinessCheck;
   onReset: () => void;
 }
 
+const GATE_GAP_LABELS: Record<string, string> = {
+  intuneProductionReady: 'Intune — not confirmed production-ready',
+  autopilotConfiguredTested: 'Windows Autopilot — not configured and tested',
+  enrollmentProfilesDefined: 'Enrollment profiles — not defined',
+  groupTagsDefined: 'Group Tags — not defined',
+  applicationsPackagedTested: 'Required applications — not packaged and tested',
+  firstArticlePlanned: 'First-article deployment — not planned',
+  ownershipAssigned: 'Ongoing Intune management — no ownership assigned',
+};
+
 export function ProServicesRoute({ profile, readiness, onReset }: Props) {
-  const gaps: string[] = [];
-  if (!readiness.autopilotReady) gaps.push('Windows Autopilot — not production-active (no assigned enrollment profiles or devices not enrolling)');
-  if (!readiness.intuneReady) gaps.push('Intune / MDM — compliance policies not enforced in production');
+  const gaps = (Object.keys(GATE_GAP_LABELS) as (keyof typeof GATE_GAP_LABELS)[])
+    .filter(key => readiness[key as keyof ReadinessCheck] === false)
+    .map(key => GATE_GAP_LABELS[key]);
 
   return (
     <div className="step-container">
@@ -32,9 +42,10 @@ export function ProServicesRoute({ profile, readiness, onReset }: Props) {
           {profile.customerName || 'This customer'} requires a readiness engagement
         </h2>
         <p style={{ color: 'var(--color-text-secondary)' }}>
-          Based on the technical discovery, this customer does not meet the minimum readiness
-          criteria for a standard Digital Workplace provisioning motion. Document the gaps below
-          and recommend a Zones Pro Services readiness engagement to the account team.
+          Based on the technical discovery, this customer does not meet the Zones Digital
+          Workplace qualification criteria for a standard Autopilot pre-provisioning motion.
+          Document the gaps below and recommend a Zones Autopilot/Intune Professional
+          Services readiness engagement to the account team.
         </p>
       </div>
 
@@ -55,7 +66,7 @@ export function ProServicesRoute({ profile, readiness, onReset }: Props) {
           <strong>Step 1:</strong> Document these technical gaps in the opportunity notes and notify the account team<br />
           <strong>Step 2:</strong> Recommend a Zones Pro Services readiness scoping call — include the gap details identified in this discovery<br />
           <strong>Step 3:</strong> Pro Services will assess the environment, build the readiness plan, and deliver the engagement<br />
-          <strong>Step 4:</strong> Once Autopilot and Intune are production-ready, re-run this Motion Tool to begin standard deployment scoping
+          <strong>Step 4:</strong> Once all seven readiness gates pass, re-run this Motion Tool to begin standard deployment scoping
         </div>
       </div>
 

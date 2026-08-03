@@ -10,6 +10,12 @@ import { Step6_RoadmapOutput } from './components/steps/Step6_RoadmapOutput';
 import { ProServicesRoute } from './components/ProServicesRoute';
 import { useMotionState } from './hooks/useMotionState';
 import { isFieldAnswered } from './types';
+import type { ReadinessCheck } from './types';
+
+const READINESS_GATE_KEYS: (keyof ReadinessCheck)[] = [
+  'intuneProductionReady', 'autopilotConfiguredTested', 'enrollmentProfilesDefined',
+  'groupTagsDefined', 'applicationsPackagedTested', 'firstArticlePlanned', 'ownershipAssigned',
+];
 
 export default function App() {
   const {
@@ -42,25 +48,51 @@ export default function App() {
 
     if (
       customerProfile.customerName.trim() &&
+      customerProfile.opportunityNumber.trim() &&
+      customerProfile.saName.trim() &&
+      customerProfile.sellerName.trim() &&
       answered(customerProfile.industry, 'customerProfile.industry') &&
       answered(customerProfile.primaryOs, 'customerProfile.primaryOs') &&
       answered(customerProfile.entraJoinType, 'customerProfile.entraJoinType') &&
       answered(customerProfile.coManagementStatus, 'customerProfile.coManagementStatus') &&
       answered(customerProfile.mdmPlatform, 'customerProfile.mdmPlatform') &&
       answered(customerProfile.deviceVolume, 'customerProfile.deviceVolume') &&
-      answered(customerProfile.deploymentTimeline, 'customerProfile.deploymentTimeline')
+      answered(customerProfile.deploymentTimeline, 'customerProfile.deploymentTimeline') &&
+      answered(customerProfile.intuneDeployedProduction, 'customerProfile.intuneDeployedProduction') &&
+      answered(customerProfile.autopilotConfiguredTestedProd, 'customerProfile.autopilotConfiguredTestedProd') &&
+      answered(customerProfile.autopilotDeployedBefore, 'customerProfile.autopilotDeployedBefore') &&
+      answered(customerProfile.autopilotProcessDocumented, 'customerProfile.autopilotProcessDocumented') &&
+      answered(customerProfile.intuneAutopilotOwner, 'customerProfile.intuneAutopilotOwner') &&
+      answered(customerProfile.immediateProductivityRequired, 'customerProfile.immediateProductivityRequired') &&
+      answered(customerProfile.deploymentModelType, 'customerProfile.deploymentModelType') &&
+      answered(customerProfile.multipleDeviceModels, 'customerProfile.multipleDeviceModels')
     ) completed.add(1);
 
-    const autopilotAnswered = readinessCheck.autopilotReady !== null || uv.includes('readinessCheck.autopilotReady');
-    const intuneAnswered = readinessCheck.intuneReady !== null || uv.includes('readinessCheck.intuneReady');
-    if (autopilotAnswered && intuneAnswered) completed.add(2);
+    const gatesAnswered = READINESS_GATE_KEYS.every(k => answered(readinessCheck[k], `readinessCheck.${k}`));
+    const gatesFailed = READINESS_GATE_KEYS.some(k => readinessCheck[k] === false && !uv.includes(`readinessCheck.${k}`));
+    if (gatesAnswered && !gatesFailed) completed.add(2);
 
-    if (deploymentRecommendation.imageType && deploymentRecommendation.provisioningModel) completed.add(3);
+    if (
+      deploymentRecommendation.imageType &&
+      deploymentRecommendation.provisioningModel &&
+      answered(deploymentRecommendation.appsWithLengthyInstall, 'deploymentRecommendation.appsWithLengthyInstall') &&
+      answered(deploymentRecommendation.appsDependOnUserCreds, 'deploymentRecommendation.appsDependOnUserCreds') &&
+      answered(deploymentRecommendation.windowsUpdatesRequiredPreProvisioning, 'deploymentRecommendation.windowsUpdatesRequiredPreProvisioning') &&
+      answered(deploymentRecommendation.hardwareModelsValidated, 'deploymentRecommendation.hardwareModelsValidated')
+    ) completed.add(3);
 
     if (
       answered(engagementTriggers.customerItPocConfirmed, 'engagementTriggers.customerItPocConfirmed') &&
       answered(engagementTriggers.tscAlignmentScheduled, 'engagementTriggers.tscAlignmentScheduled') &&
-      answered(engagementTriggers.cloudServicesEngaged, 'engagementTriggers.cloudServicesEngaged')
+      answered(engagementTriggers.cloudServicesEngaged, 'engagementTriggers.cloudServicesEngaged') &&
+      answered(engagementTriggers.deviceImportMethod, 'engagementTriggers.deviceImportMethod') &&
+      answered(engagementTriggers.enrollmentHandledBy, 'engagementTriggers.enrollmentHandledBy') &&
+      answered(engagementTriggers.shipToLocation, 'engagementTriggers.shipToLocation') &&
+      answered(engagementTriggers.directToUserShipmentRequired, 'engagementTriggers.directToUserShipmentRequired') &&
+      answered(engagementTriggers.adultSignatureRequired, 'engagementTriggers.adultSignatureRequired') &&
+      answered(engagementTriggers.assetTagsBiosCustomPackaging, 'engagementTriggers.assetTagsBiosCustomPackaging') &&
+      answered(engagementTriggers.regionalInternationalRequirements, 'engagementTriggers.regionalInternationalRequirements') &&
+      answered(engagementTriggers.holdToCompleteRequired, 'engagementTriggers.holdToCompleteRequired')
     ) completed.add(4);
 
     if (firstArticle.required !== null && firstArticle.testOrderNeeded !== null) completed.add(5);
@@ -70,11 +102,8 @@ export default function App() {
   }, [state]); // eslint-disable-line react-hooks/exhaustive-deps
 
   function handleReadinessNext() {
-    const uvAutopilot = uv.includes('readinessCheck.autopilotReady');
-    const uvIntune = uv.includes('readinessCheck.intuneReady');
-    const autopilotOk = readinessCheck.autopilotReady === true || uvAutopilot;
-    const intuneOk = readinessCheck.intuneReady === true || uvIntune;
-    if (autopilotOk && intuneOk) nextStep();
+    const gatesOk = READINESS_GATE_KEYS.every(k => readinessCheck[k] === true || uv.includes(`readinessCheck.${k}`));
+    if (gatesOk) nextStep();
   }
 
   function handleRouteToProServices() {
@@ -83,7 +112,7 @@ export default function App() {
 
   const isRoutedToProServices =
     readinessCheck.routedToProServices &&
-    (readinessCheck.autopilotReady === false || readinessCheck.intuneReady === false);
+    READINESS_GATE_KEYS.some(k => readinessCheck[k] === false);
 
   if (!discoveryMode) {
     return <DiscoveryModeSelector onSelect={setDiscoveryMode} />;
@@ -141,6 +170,8 @@ export default function App() {
                 readiness={readinessCheck}
                 recommendation={deploymentRecommendation}
                 onUpdate={updateDeploymentRecommendation}
+                onMarkUnvalidated={markUnvalidated}
+                onClearUnvalidated={clearUnvalidated}
                 onNext={nextStep}
               />
             )}

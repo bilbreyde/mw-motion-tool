@@ -1,7 +1,18 @@
 import { useEffect } from 'react';
 import { ConversationalMessage } from '../ConversationalMessage';
+import { ChecklistPrintView } from '../ChecklistPrintView';
 import type { MotionState, RoadmapStep, Owner } from '../../types';
 import { callMotionAI } from '../../utils/api';
+
+function printChecklist() {
+  document.body.classList.add('printing-checklist');
+  const cleanup = () => {
+    document.body.classList.remove('printing-checklist');
+    window.removeEventListener('afterprint', cleanup);
+  };
+  window.addEventListener('afterprint', cleanup);
+  window.print();
+}
 
 interface Props {
   state: MotionState;
@@ -43,11 +54,43 @@ const FIELD_LABELS: Record<string, string> = {
   'customerProfile.mdmPlatform': 'MDM platform',
   'customerProfile.deviceVolume': 'Device volume',
   'customerProfile.deploymentTimeline': 'Deployment timeline',
-  'readinessCheck.autopilotReady': 'Autopilot production status',
-  'readinessCheck.intuneReady': 'Intune compliance enforcement status',
+  'customerProfile.intuneDeployedProduction': 'Intune deployed to production devices',
+  'customerProfile.autopilotConfiguredTestedProd': 'Autopilot configured and tested in production',
+  'customerProfile.autopilotDeployedBefore': 'Prior successful Autopilot deployments',
+  'customerProfile.autopilotProcessDocumented': 'Autopilot process documented and repeatable',
+  'customerProfile.intuneAutopilotOwner': 'Intune/Autopilot environment owner',
+  'customerProfile.immediateProductivityRequired': 'Immediate productivity required at first login',
+  'customerProfile.deploymentModelType': 'Deployment model type (pilot/refresh/new hire/ongoing)',
+  'customerProfile.multipleDeviceModels': 'Multiple device models involved',
+  'readinessCheck.intuneProductionReady': 'Gate 1 — Intune production-ready',
+  'readinessCheck.autopilotConfiguredTested': 'Gate 2 — Autopilot configured and tested',
+  'readinessCheck.enrollmentProfilesDefined': 'Gate 3 — Enrollment profiles defined',
+  'readinessCheck.groupTagsDefined': 'Gate 4 — Group Tags defined',
+  'readinessCheck.applicationsPackagedTested': 'Gate 5 — Applications packaged and tested',
+  'readinessCheck.firstArticlePlanned': 'Gate 6 — First-article deployment planned',
+  'readinessCheck.ownershipAssigned': 'Gate 7 — Ongoing Intune management ownership assigned',
+  'readinessCheck.deploymentProfilesValidated': 'Autopilot deployment profiles created and validated',
+  'readinessCheck.deviceGroupsConfigured': 'Device groups and dynamic assignments configured',
+  'readinessCheck.groupTagsRequired': 'Group Tags required for deployment',
+  'readinessCheck.espConfigured': 'Enrollment Status Page (ESP) configured',
+  'readinessCheck.enrollmentRestrictionsExist': 'Enrollment restrictions / Conditional Access impact',
+  'readinessCheck.provisioningPreference': 'Standard vs. pre-provisioned preference',
+  'deploymentRecommendation.appsWithLengthyInstall': 'Applications with lengthy install times',
+  'deploymentRecommendation.appsDependOnUserCreds': 'Applications dependent on user credentials',
+  'deploymentRecommendation.windowsUpdatesRequiredPreProvisioning': 'Windows updates required during pre-provisioning',
+  'deploymentRecommendation.vpnSecurityAgentsRequired': 'VPN/security agents/EDR required before shipment',
+  'deploymentRecommendation.hardwareModelsValidated': 'Hardware models validated against Intune config',
   'engagementTriggers.customerItPocConfirmed': 'Customer IT stakeholder confirmed',
   'engagementTriggers.tscAlignmentScheduled': 'TSC alignment call',
   'engagementTriggers.cloudServicesEngaged': 'Cloud Services licensing review',
+  'engagementTriggers.deviceImportMethod': 'Device import method into Autopilot',
+  'engagementTriggers.enrollmentHandledBy': 'Enrollment handled by OEM or Zones',
+  'engagementTriggers.shipToLocation': 'Ship-to location',
+  'engagementTriggers.directToUserShipmentRequired': 'Direct-to-user shipment required',
+  'engagementTriggers.adultSignatureRequired': 'Adult signature required',
+  'engagementTriggers.assetTagsBiosCustomPackaging': 'Asset tags / BIOS / custom packaging required',
+  'engagementTriggers.regionalInternationalRequirements': 'Regional or international deployment requirements',
+  'engagementTriggers.holdToCompleteRequired': 'Hold-to-complete process required',
 };
 
 export function Step6_RoadmapOutput({ state, onUpdateRoadmap, onReset }: Props) {
@@ -104,11 +147,21 @@ export function Step6_RoadmapOutput({ state, onUpdateRoadmap, onReset }: Props) 
               <span style={{ marginLeft: 12, color: 'var(--color-warning)', fontWeight: 600 }}>◎ Validation Mode</span>
             )}
           </p>
+          <p style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)', margin: '4px 0 0' }}>
+            Opportunity #{customerProfile.opportunityNumber || '—'} &nbsp;·&nbsp; SA: {customerProfile.saName || '—'} &nbsp;·&nbsp; Seller: {customerProfile.sellerName || '—'}
+          </p>
         </div>
-        <button className="btn-secondary" onClick={() => window.print()} style={{ fontSize: '0.85rem', padding: '8px 16px' }}>
-          Print / Export PDF
-        </button>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button className="btn-secondary" onClick={printChecklist} style={{ fontSize: '0.85rem', padding: '8px 16px' }}>
+            Print Checklist
+          </button>
+          <button className="btn-secondary" onClick={() => window.print()} style={{ fontSize: '0.85rem', padding: '8px 16px' }}>
+            Print / Export PDF
+          </button>
+        </div>
       </div>
+
+      <ChecklistPrintView state={state} />
 
       {/* Unvalidated items — shown prominently before anything else */}
       {unvalidatedFields.length > 0 && (

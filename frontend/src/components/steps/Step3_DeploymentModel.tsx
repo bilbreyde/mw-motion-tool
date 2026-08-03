@@ -1,6 +1,8 @@
 import { useEffect } from 'react';
 import { ConversationalMessage } from '../ConversationalMessage';
 import { OptionButton } from '../OptionButton';
+import { YesNoField } from '../YesNoField';
+import { TextField } from '../TextField';
 import type { CustomerProfile, ReadinessCheck, DeploymentRecommendation, DiscoveryMode, ImageType, ProvisioningModel } from '../../types';
 import { callMotionAI } from '../../utils/api';
 
@@ -11,10 +13,12 @@ interface Props {
   readiness: ReadinessCheck;
   recommendation: DeploymentRecommendation;
   onUpdate: (updates: Partial<DeploymentRecommendation>) => void;
+  onMarkUnvalidated: (fieldKey: string) => void;
+  onClearUnvalidated: (fieldKey: string) => void;
   onNext: () => void;
 }
 
-const IMAGE_OPTIONS: { value: ImageType; label: string; sublabel: string }[] = [
+export const IMAGE_OPTIONS: { value: ImageType; label: string; sublabel: string }[] = [
   {
     value: 'clean-image',
     label: 'Clean Image (Zones Build)',
@@ -27,7 +31,7 @@ const IMAGE_OPTIONS: { value: ImageType; label: string; sublabel: string }[] = [
   },
 ];
 
-const PROVISIONING_OPTIONS: { value: ProvisioningModel; label: string; sublabel: string }[] = [
+export const PROVISIONING_OPTIONS: { value: ProvisioningModel; label: string; sublabel: string }[] = [
   {
     value: 'pre-provisioning',
     label: 'Pre-Provisioning (Technician / White Glove)',
@@ -45,8 +49,19 @@ const PROVISIONING_OPTIONS: { value: ProvisioningModel; label: string; sublabel:
   },
 ];
 
-export function Step3_DeploymentModel({ profile, discoveryMode, unvalidatedFields, readiness, recommendation, onUpdate, onNext }: Props) {
-  const canProceed = recommendation.imageType !== null && recommendation.provisioningModel !== null;
+export function Step3_DeploymentModel({
+  profile, discoveryMode, unvalidatedFields, readiness, recommendation,
+  onUpdate, onMarkUnvalidated, onClearUnvalidated, onNext
+}: Props) {
+  const uv = (k: string) => unvalidatedFields.includes(k);
+
+  const canProceed =
+    recommendation.imageType !== null &&
+    recommendation.provisioningModel !== null &&
+    (recommendation.appsWithLengthyInstall !== null || uv('deploymentRecommendation.appsWithLengthyInstall')) &&
+    (recommendation.appsDependOnUserCreds !== null || uv('deploymentRecommendation.appsDependOnUserCreds')) &&
+    (recommendation.windowsUpdatesRequiredPreProvisioning !== null || uv('deploymentRecommendation.windowsUpdatesRequiredPreProvisioning')) &&
+    (recommendation.hardwareModelsValidated !== null || uv('deploymentRecommendation.hardwareModelsValidated'));
 
   useEffect(() => {
     if (!recommendation.aiRationale && !recommendation.loading) {
@@ -179,6 +194,133 @@ export function Step3_DeploymentModel({ profile, discoveryMode, unvalidatedField
           </div>
         </div>
       )}
+
+      {/* Category 3 - Application Readiness (install-time / credential half) */}
+      <h3 className="category-heading">Application Readiness</h3>
+
+      <TextField
+        label="If pre-provisioning, which software must be installed?"
+        value={recommendation.preProvisioningSoftwareList}
+        placeholder="e.g. LOB ERP client, VPN client, EDR agent"
+        fieldKey="deploymentRecommendation.preProvisioningSoftwareList"
+        discoveryMode={discoveryMode}
+        unvalidatedFields={unvalidatedFields}
+        onChange={v => onUpdate({ preProvisioningSoftwareList: v })}
+        onMarkUnvalidated={onMarkUnvalidated}
+        onClearUnvalidated={onClearUnvalidated}
+        multiline
+      />
+
+      <YesNoField
+        label="Are there any applications with lengthy installation times?"
+        value={recommendation.appsWithLengthyInstall}
+        fieldKey="deploymentRecommendation.appsWithLengthyInstall"
+        discoveryMode={discoveryMode}
+        unvalidatedFields={unvalidatedFields}
+        onChange={v => onUpdate({ appsWithLengthyInstall: v })}
+        onMarkUnvalidated={onMarkUnvalidated}
+        onClearUnvalidated={onClearUnvalidated}
+        yesLabel="Yes — lengthy install times exist"
+        noLabel="No — install times are acceptable"
+      />
+
+      {recommendation.appsWithLengthyInstall === true && (
+        <TextField
+          label="Which applications have lengthy installation times?"
+          value={recommendation.appsWithLengthyInstallDetail}
+          placeholder="e.g. AutoCAD (~25 min install), Adobe Creative Cloud suite"
+          fieldKey="deploymentRecommendation.appsWithLengthyInstallDetail"
+          discoveryMode={discoveryMode}
+          unvalidatedFields={unvalidatedFields}
+          onChange={v => onUpdate({ appsWithLengthyInstallDetail: v })}
+          onMarkUnvalidated={onMarkUnvalidated}
+          onClearUnvalidated={onClearUnvalidated}
+          multiline
+        />
+      )}
+
+      <YesNoField
+        label="Are any applications dependent on user credentials before installation?"
+        value={recommendation.appsDependOnUserCreds}
+        fieldKey="deploymentRecommendation.appsDependOnUserCreds"
+        discoveryMode={discoveryMode}
+        unvalidatedFields={unvalidatedFields}
+        onChange={v => onUpdate({ appsDependOnUserCreds: v })}
+        onMarkUnvalidated={onMarkUnvalidated}
+        onClearUnvalidated={onClearUnvalidated}
+        yesLabel="Yes — credential-dependent installs exist"
+        noLabel="No — no credential dependency"
+      />
+
+      {/* Category 4 - Device Configuration Requirements */}
+      <h3 className="category-heading">Device Configuration Requirements</h3>
+
+      <TextField
+        label="Which device policies must be applied before shipment?"
+        value={recommendation.devicePoliciesRequired}
+        placeholder="e.g. BitLocker enforcement, compliance baseline, endpoint protection policy"
+        fieldKey="deploymentRecommendation.devicePoliciesRequired"
+        discoveryMode={discoveryMode}
+        unvalidatedFields={unvalidatedFields}
+        onChange={v => onUpdate({ devicePoliciesRequired: v })}
+        onMarkUnvalidated={onMarkUnvalidated}
+        onClearUnvalidated={onClearUnvalidated}
+        multiline
+      />
+
+      <YesNoField
+        label="Are Windows updates required during pre-provisioning?"
+        value={recommendation.windowsUpdatesRequiredPreProvisioning}
+        fieldKey="deploymentRecommendation.windowsUpdatesRequiredPreProvisioning"
+        discoveryMode={discoveryMode}
+        unvalidatedFields={unvalidatedFields}
+        onChange={v => onUpdate({ windowsUpdatesRequiredPreProvisioning: v })}
+        onMarkUnvalidated={onMarkUnvalidated}
+        onClearUnvalidated={onClearUnvalidated}
+        yesLabel="Yes — updates required"
+        noLabel="No — not required"
+      />
+
+      <YesNoField
+        label="Are VPN, security agents, EDR, or compliance tools required before the device ships?"
+        value={recommendation.vpnSecurityAgentsRequired}
+        fieldKey="deploymentRecommendation.vpnSecurityAgentsRequired"
+        discoveryMode={discoveryMode}
+        unvalidatedFields={unvalidatedFields}
+        onChange={v => onUpdate({ vpnSecurityAgentsRequired: v })}
+        onMarkUnvalidated={onMarkUnvalidated}
+        onClearUnvalidated={onClearUnvalidated}
+        yesLabel="Yes — required before shipment"
+        noLabel="No — not required before shipment"
+      />
+
+      {recommendation.vpnSecurityAgentsRequired === true && (
+        <TextField
+          label="Which VPN, security agents, EDR, or compliance tools are required?"
+          value={recommendation.vpnSecurityAgentsDetail}
+          placeholder="e.g. GlobalProtect VPN, CrowdStrike Falcon, Defender for Endpoint"
+          fieldKey="deploymentRecommendation.vpnSecurityAgentsDetail"
+          discoveryMode={discoveryMode}
+          unvalidatedFields={unvalidatedFields}
+          onChange={v => onUpdate({ vpnSecurityAgentsDetail: v })}
+          onMarkUnvalidated={onMarkUnvalidated}
+          onClearUnvalidated={onClearUnvalidated}
+          multiline
+        />
+      )}
+
+      <YesNoField
+        label="Have hardware models been validated against the Intune configuration?"
+        value={recommendation.hardwareModelsValidated}
+        fieldKey="deploymentRecommendation.hardwareModelsValidated"
+        discoveryMode={discoveryMode}
+        unvalidatedFields={unvalidatedFields}
+        onChange={v => onUpdate({ hardwareModelsValidated: v })}
+        onMarkUnvalidated={onMarkUnvalidated}
+        onClearUnvalidated={onClearUnvalidated}
+        yesLabel="Yes — hardware validated"
+        noLabel="No — not yet validated"
+      />
 
       <div className="step-actions">
         <button className="btn-primary" onClick={onNext} disabled={!canProceed}>
