@@ -8,11 +8,29 @@ interface SidebarProps {
   blockedAtStep?: number;
   onStepClick: (step: number) => void;
   onReset: () => void;
+  sessionCode: string | null;
+  lastSavedAt: string | null;
+  saving: boolean;
+  saveError: string | null;
+  onSaveSession: () => void;
 }
 
 const CHECK = '✓';
 
-export function Sidebar({ currentStep, completedSteps, discoveryMode, blockedAtStep, onStepClick, onReset }: SidebarProps) {
+function formatRelativeTime(iso: string): string {
+  const diffMs = Date.now() - new Date(iso).getTime();
+  const diffMin = Math.round(diffMs / 60000);
+  if (diffMin < 1) return 'just now';
+  if (diffMin < 60) return `${diffMin}m ago`;
+  const diffHr = Math.round(diffMin / 60);
+  if (diffHr < 24) return `${diffHr}h ago`;
+  return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+
+export function Sidebar({
+  currentStep, completedSteps, discoveryMode, blockedAtStep, onStepClick, onReset,
+  sessionCode, lastSavedAt, saving, saveError, onSaveSession,
+}: SidebarProps) {
   return (
     <aside className="sidebar">
       <div className="sidebar-header">
@@ -69,6 +87,18 @@ export function Sidebar({ currentStep, completedSteps, discoveryMode, blockedAtS
       </nav>
 
       <div className="sidebar-footer">
+        <div className="session-save-block">
+          <button className="save-session-btn" onClick={onSaveSession} disabled={saving}>
+            {saving ? 'Saving…' : 'Save Session'}
+          </button>
+          {sessionCode && (
+            <div className="session-save-meta">
+              Code: <strong>{sessionCode}</strong>
+              {lastSavedAt && <span> · Saved {formatRelativeTime(lastSavedAt)}</span>}
+            </div>
+          )}
+          {saveError && <div className="session-save-error">{saveError}</div>}
+        </div>
         <button className="reset-btn" onClick={onReset}>
           New Engagement
         </button>

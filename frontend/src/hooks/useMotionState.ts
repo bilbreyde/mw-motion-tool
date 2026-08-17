@@ -98,6 +98,9 @@ const initialState: MotionState = {
     generatedAt: '',
     loading: false,
   },
+  sessionCode: null,
+  lastSavedAt: null,
+  editReturnStep: null,
 };
 
 export function useMotionState() {
@@ -128,7 +131,22 @@ export function useMotionState() {
   }, []);
 
   const nextStep = useCallback(() => {
-    setState(prev => ({ ...prev, currentStep: Math.min(prev.currentStep + 1, 6) }));
+    setState(prev => {
+      if (prev.editReturnStep !== null) {
+        return {
+          ...prev,
+          currentStep: prev.editReturnStep,
+          editReturnStep: null,
+          // Force Step 6 to regenerate the roadmap against the edited answers.
+          roadmapOutput: { ...prev.roadmapOutput, steps: [], aiSummary: '', loading: false },
+        };
+      }
+      return { ...prev, currentStep: Math.min(prev.currentStep + 1, 6) };
+    });
+  }, []);
+
+  const editStep = useCallback((step: number) => {
+    setState(prev => ({ ...prev, currentStep: step, editReturnStep: 6 }));
   }, []);
 
   const updateCustomerProfile = useCallback((updates: Partial<CustomerProfile>) => {
@@ -175,6 +193,22 @@ export function useMotionState() {
 
   const reset = useCallback(() => setState(initialState), []);
 
+  const setSessionMeta = useCallback((updates: { sessionCode?: string | null; lastSavedAt?: string | null }) => {
+    setState(prev => ({ ...prev, ...updates }));
+  }, []);
+
+  const loadState = useCallback((loaded: MotionState, sessionCode: string, updatedAt: string) => {
+    setState({
+      ...loaded,
+      sessionCode,
+      lastSavedAt: updatedAt,
+      editReturnStep: null,
+      deploymentRecommendation: { ...loaded.deploymentRecommendation, loading: false },
+      firstArticle: { ...loaded.firstArticle, loading: false },
+      roadmapOutput: { ...loaded.roadmapOutput, loading: false },
+    });
+  }, []);
+
   return {
     state,
     setDiscoveryMode,
@@ -182,6 +216,7 @@ export function useMotionState() {
     clearUnvalidated,
     goToStep,
     nextStep,
+    editStep,
     updateCustomerProfile,
     updateReadinessCheck,
     updateDeploymentRecommendation,
@@ -189,5 +224,7 @@ export function useMotionState() {
     updateFirstArticle,
     updateRoadmap,
     reset,
+    setSessionMeta,
+    loadState,
   };
 }

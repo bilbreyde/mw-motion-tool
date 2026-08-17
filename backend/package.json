@@ -9,6 +9,7 @@
     "dev": "npm run build && func start --verbose"
   },
   "dependencies": {
+    "@azure/cosmos": "^4.10.0",
     "@azure/functions": "^4.5.0",
     "openai": "^4.67.0"
   },

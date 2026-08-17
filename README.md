@@ -16,10 +16,13 @@ mw-motion-tool/
 │       └── utils/api.ts        Azure Functions API client
 └── backend/           Azure Functions v4 (Node.js + TypeScript)
     └── src/functions/
-        └── motion.ts           POST /api/motion — AI call handler
+        ├── motion.ts            POST /api/motion — AI call handler
+        └── session.ts           POST /api/session, GET /api/session/{code} — session persistence
 ```
 
 **Data flow:** Browser → Azure Functions → Azure AI Foundry (OpenAI-compatible) → structured JSON response → UI updates
+
+**Session persistence:** Browser → Azure Functions → Azure Cosmos DB (`sessions` container). No login required — a 6-character session code (e.g. `DW-A3K9P2`) is the only key.
 
 ---
 
@@ -28,6 +31,8 @@ mw-motion-tool/
 - Node.js 20+
 - Azure Functions Core Tools v4: `npm install -g azure-functions-core-tools@4`
 - An Azure AI Foundry resource with a model deployment (default: `gpt-5.4`)
+- An Azure Cosmos DB (NoSQL API) account for session persistence — see [Session Persistence](#session-persistence)
+- For local development against Cosmos, an Azure Storage emulator such as [Azurite](https://www.npmjs.com/package/azurite) (`npx azurite`) since the Functions host requires `AzureWebJobsStorage` even for HTTP-only functions
 
 ---
 
@@ -59,7 +64,11 @@ Edit `local.settings.json` and fill in your values:
   "Values": {
     "AZURE_FOUNDRY_ENDPOINT": "https://YOUR-RESOURCE.openai.azure.com/",
     "AZURE_FOUNDRY_KEY": "YOUR-API-KEY",
-    "AZURE_OPENAI_DEPLOYMENT": "gpt-5.4"
+    "AZURE_OPENAI_DEPLOYMENT": "gpt-5.4",
+    "COSMOS_ENDPOINT": "https://YOUR-COSMOS-ACCOUNT.documents.azure.com:443/",
+    "COSMOS_KEY": "YOUR-COSMOS-PRIMARY-KEY",
+    "COSMOS_DATABASE": "motion-tool",
+    "COSMOS_CONTAINER": "sessions"
   }
 }
 ```
@@ -78,16 +87,21 @@ VITE_API_BASE_URL=https://your-function-app.azurewebsites.net
 
 ## Running Locally
 
-You need two terminals:
+You need three terminals (or two if `AzureWebJobsStorage` points at a real storage account instead of the emulator):
 
-**Terminal 1 — Backend (Azure Functions):**
+**Terminal 1 — Storage emulator (Azurite, required by the Functions host):**
+```bash
+npx azurite --silent --location backend/.azurite
+```
+
+**Terminal 2 — Backend (Azure Functions):**
 ```bash
 cd backend
 npm run start
 # Functions running at: http://localhost:7071/api/motion
 ```
 
-**Terminal 2 — Frontend (Vite):**
+**Terminal 3 — Frontend (Vite):**
 ```bash
 cd frontend
 npm run dev
@@ -135,6 +149,10 @@ Set these Application Settings in the Azure portal (not in code):
 - `AZURE_FOUNDRY_ENDPOINT`
 - `AZURE_FOUNDRY_KEY`
 - `AZURE_OPENAI_DEPLOYMENT`
+- `COSMOS_ENDPOINT`
+- `COSMOS_KEY`
+- `COSMOS_DATABASE`
+- `COSMOS_CONTAINER`
 
 ### Frontend (Static Web App or Azure Storage)
 
@@ -157,6 +175,27 @@ The backend calls any Azure OpenAI-compatible endpoint. To switch from `gpt-5.4`
 3. Update `local.settings.json` locally
 
 No code changes needed — the deployment name is fully configuration-driven.
+
+---
+
+## Session Persistence
+
+SAs can save an in-progress engagement and resume it later — no login required.
+
+- **Save Session** — available in the sidebar on every step (including the Pro Services route). Saves the full wizard state to Cosmos DB and returns a 6-character code, e.g. `DW-A3K9P2` (uppercase, excludes ambiguous `0/O`/`1/I`). Saving again with the same session loaded updates the same record in place.
+- **Resume Existing Session** — on the initial Discovery Mode Selector screen, an SA enters a session code to restore all captured answers and land back on the step they left off.
+- **Edit Answers** — on the Step 6 Roadmap screen, "Edit Answers" lists Steps 1–5; jumping to a step and clicking Next returns to Step 6 and regenerates the AI roadmap against the updated answers.
+- Storage: one Cosmos DB document per session (`id` = session code) in the `sessions` container, holding the full wizard state plus denormalized customer name, opportunity number, SA/seller name, discovery mode, completion status, and timestamps.
+- The stateless path is unaffected — an SA who never clicks Save can complete the full 6-step flow with nothing persisted.
+
+Provisioned for this project via:
+```bash
+az cosmosdb create -g rg-mw-motion-tool -n cosmos-mw-motion-tool \
+  --locations regionName=eastus failoverPriority=0 \
+  --capabilities EnableServerless --default-consistency-level Session
+az cosmosdb sql database create -g rg-mw-motion-tool -a cosmos-mw-motion-tool -n motion-tool
+az cosmosdb sql container create -g rg-mw-motion-tool -a cosmos-mw-motion-tool -d motion-tool -n sessions --partition-key-path "/id"
+```
 
 ---
 

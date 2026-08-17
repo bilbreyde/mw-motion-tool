@@ -166,6 +166,25 @@ export interface MotionState {
   engagementTriggers: EngagementTriggers;
   firstArticle: FirstArticle;
   roadmapOutput: RoadmapOutput;
+  sessionCode: string | null;
+  lastSavedAt: string | null;
+  // Set when the SA jumps back to an earlier step to edit an answer from Step 6.
+  // nextStep() returns here instead of advancing, and roadmap regeneration is forced.
+  editReturnStep: number | null;
+}
+
+export type SessionCompletionStatus = 'in-progress' | 'complete';
+
+export interface SaveSessionResponse {
+  sessionCode: string;
+  updatedAt: string;
+}
+
+export interface LoadSessionResponse {
+  sessionCode: string;
+  state: MotionState;
+  completionStatus: SessionCompletionStatus;
+  updatedAt: string;
 }
 
 export interface AiMotionRequest {

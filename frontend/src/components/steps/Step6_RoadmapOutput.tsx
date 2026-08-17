@@ -1,8 +1,10 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { ConversationalMessage } from '../ConversationalMessage';
 import { ChecklistPrintView } from '../ChecklistPrintView';
 import type { MotionState, RoadmapStep, Owner } from '../../types';
+import { STEP_LABELS } from '../../types';
 import { callMotionAI } from '../../utils/api';
+import { renderAiText } from '../../utils/formatAiText';
 
 function printChecklist() {
   document.body.classList.add('printing-checklist');
@@ -18,7 +20,10 @@ interface Props {
   state: MotionState;
   onUpdateRoadmap: (updates: Partial<MotionState['roadmapOutput']>) => void;
   onReset: () => void;
+  onEditStep: (step: number) => void;
 }
+
+const EDITABLE_STEPS = Object.entries(STEP_LABELS).filter(([step]) => Number(step) < 6);
 
 function ownerClass(owner: Owner): string {
   const map: Record<Owner, string> = {
@@ -93,11 +98,13 @@ const FIELD_LABELS: Record<string, string> = {
   'engagementTriggers.holdToCompleteRequired': 'Hold-to-complete process required',
 };
 
-export function Step6_RoadmapOutput({ state, onUpdateRoadmap, onReset }: Props) {
+export function Step6_RoadmapOutput({ state, onUpdateRoadmap, onReset, onEditStep }: Props) {
   const {
     roadmapOutput, customerProfile, readinessCheck, deploymentRecommendation,
     engagementTriggers, firstArticle, discoveryMode, unvalidatedFields
   } = state;
+
+  const [editPanelOpen, setEditPanelOpen] = useState(false);
 
   useEffect(() => {
     if (!roadmapOutput.aiSummary && !roadmapOutput.loading) {
@@ -152,6 +159,13 @@ export function Step6_RoadmapOutput({ state, onUpdateRoadmap, onReset }: Props) 
           </p>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
+          <button
+            className={`btn-secondary ${editPanelOpen ? 'option-btn--selected' : ''}`}
+            onClick={() => setEditPanelOpen(v => !v)}
+            style={{ fontSize: '0.85rem', padding: '8px 16px' }}
+          >
+            {editPanelOpen ? 'Close Edit Answers' : 'Edit Answers'}
+          </button>
           <button className="btn-secondary" onClick={printChecklist} style={{ fontSize: '0.85rem', padding: '8px 16px' }}>
             Print Checklist
           </button>
@@ -160,6 +174,27 @@ export function Step6_RoadmapOutput({ state, onUpdateRoadmap, onReset }: Props) 
           </button>
         </div>
       </div>
+
+      {editPanelOpen && (
+        <div className="edit-answers-panel">
+          <div className="edit-answers-header">Jump back to a step to update an answer</div>
+          <p style={{ fontSize: '0.82rem', color: 'var(--color-text-muted)', marginBottom: 12 }}>
+            Other answers are preserved. When you click Next from that step, you'll return here and the
+            roadmap will be regenerated against your changes.
+          </p>
+          {EDITABLE_STEPS.map(([step, label]) => (
+            <div key={step} className="edit-answers-row">
+              <span>
+                <span className="edit-answers-step-num">{step}</span>
+                {label}
+              </span>
+              <button className="btn-secondary" style={{ padding: '6px 14px', fontSize: '0.8rem' }} onClick={() => onEditStep(Number(step))}>
+                Edit →
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
 
       <ChecklistPrintView state={state} />
 
@@ -191,8 +226,10 @@ export function Step6_RoadmapOutput({ state, onUpdateRoadmap, onReset }: Props) 
       )}
 
       <ConversationalMessage loading={roadmapOutput.loading}>
-        {roadmapOutput.loading ? null : (
-          <p>{roadmapOutput.aiSummary || 'Roadmap generated. Review all steps and confirm with TSC before customer delivery.'}</p>
+        {roadmapOutput.loading ? null : roadmapOutput.aiSummary ? (
+          renderAiText(roadmapOutput.aiSummary)
+        ) : (
+          <p>Roadmap generated. Review all steps and confirm with TSC before customer delivery.</p>
         )}
       </ConversationalMessage>
 

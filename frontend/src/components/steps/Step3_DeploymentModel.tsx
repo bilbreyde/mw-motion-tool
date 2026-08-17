@@ -5,6 +5,7 @@ import { YesNoField } from '../YesNoField';
 import { TextField } from '../TextField';
 import type { CustomerProfile, ReadinessCheck, DeploymentRecommendation, DiscoveryMode, ImageType, ProvisioningModel } from '../../types';
 import { callMotionAI } from '../../utils/api';
+import { renderAiText } from '../../utils/formatAiText';
 
 interface Props {
   profile: CustomerProfile;
@@ -92,13 +93,14 @@ export function Step3_DeploymentModel({
   return (
     <div className="step-container">
       <ConversationalMessage loading={recommendation.loading}>
-        {recommendation.loading ? null : (
+        {recommendation.loading ? null : recommendation.aiRationale ? (
+          renderAiText(recommendation.aiRationale)
+        ) : (
           <p>
-            {recommendation.aiRationale ||
-              `Based on the technical discovery — ${profile.entraJoinType} join type,
-              ${profile.coManagementStatus} co-management status, Autopilot profile
-              ${readiness.autopilotProfileType ?? 'confirmed'} — here is the recommended
-              deployment model. Review with TSC before finalizing.`}
+            Based on the technical discovery — {profile.entraJoinType} join type,{' '}
+            {profile.coManagementStatus} co-management status, Autopilot profile{' '}
+            {readiness.autopilotProfileType ?? 'confirmed'} — here is the recommended
+            deployment model. Review with TSC before finalizing.
           </p>
         )}
       </ConversationalMessage>

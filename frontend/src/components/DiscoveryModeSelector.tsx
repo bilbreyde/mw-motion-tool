@@ -1,10 +1,21 @@
+import { useState } from 'react';
 import type { DiscoveryMode } from '../types';
 
 interface Props {
   onSelect: (mode: DiscoveryMode) => void;
+  onResumeSession: (code: string) => void;
+  resuming: boolean;
+  resumeError: string | null;
 }
 
-export function DiscoveryModeSelector({ onSelect }: Props) {
+export function DiscoveryModeSelector({ onSelect, onResumeSession, resuming, resumeError }: Props) {
+  const [code, setCode] = useState('');
+
+  function handleResumeSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (code.trim()) onResumeSession(code.trim());
+  }
+
   return (
     <div className="discovery-mode-selector">
       <div className="discovery-mode-inner">
@@ -62,6 +73,32 @@ export function DiscoveryModeSelector({ onSelect }: Props) {
           Both paths follow the same six-step discovery process.
           You can start a new engagement at any time to switch modes.
         </p>
+
+        <div className="resume-session-divider">
+          <span>OR</span>
+        </div>
+
+        <form className="resume-session-block" onSubmit={handleResumeSubmit}>
+          <div className="mode-card-title" style={{ marginBottom: 4 }}>Resume Existing Session</div>
+          <p style={{ color: 'var(--color-text-muted)', fontSize: '0.82rem', marginBottom: 12 }}>
+            Enter the session code you were given when the engagement was last saved.
+          </p>
+          <div className="resume-session-input-row">
+            <input
+              className="text-input"
+              type="text"
+              placeholder="DW-A3K9P2"
+              value={code}
+              disabled={resuming}
+              onChange={e => setCode(e.target.value.toUpperCase())}
+              style={{ fontFamily: 'var(--font-mono)', letterSpacing: '1px', textAlign: 'center' }}
+            />
+            <button type="submit" className="btn-primary" disabled={resuming || !code.trim()}>
+              {resuming ? 'Resuming…' : 'Resume'}
+            </button>
+          </div>
+          {resumeError && <div className="session-save-error" style={{ marginTop: 10 }}>{resumeError}</div>}
+        </form>
       </div>
     </div>
   );

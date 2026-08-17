@@ -6,6 +6,7 @@ import type {
   EngagementTriggers, FirstArticle, DiscoveryMode
 } from '../../types';
 import { callMotionAI } from '../../utils/api';
+import { renderAiText } from '../../utils/formatAiText';
 
 interface Props {
   profile: CustomerProfile;
@@ -57,13 +58,14 @@ export function Step5_FirstArticle({
   return (
     <div className="step-container">
       <ConversationalMessage loading={firstArticle.loading}>
-        {firstArticle.loading ? null : (
+        {firstArticle.loading ? null : firstArticle.aiGuidance ? (
+          renderAiText(firstArticle.aiGuidance)
+        ) : (
           <p>
-            {firstArticle.aiGuidance ||
-              `As the DW SA, you are responsible for defining and documenting the first article
-              validation criteria for this engagement. Do not delegate this specification to TSC
-              or the account team without providing a written acceptance checklist. A first article
-              is required before any production-scale device order is placed.`}
+            As the DW SA, you are responsible for defining and documenting the first article
+            validation criteria for this engagement. Do not delegate this specification to TSC
+            or the account team without providing a written acceptance checklist. A first article
+            is required before any production-scale device order is placed.
           </p>
         )}
       </ConversationalMessage>
