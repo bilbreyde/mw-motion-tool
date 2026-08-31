@@ -57,7 +57,7 @@ export interface CustomerProfile {
 
   // Category 8 - Scale & Operational Planning
   devicesPerMonthQuarter: string;
-  deploymentModelType: DeploymentModelType | null;
+  deploymentModelType: DeploymentModelType[];
   multipleDeviceModels: boolean | null;
   firstArticleContact: string;
   pilotSuccessCriteria: string;

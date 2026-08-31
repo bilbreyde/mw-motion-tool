@@ -65,7 +65,7 @@ const FIELD_LABELS: Record<string, string> = {
   'customerProfile.autopilotProcessDocumented': 'Autopilot process documented and repeatable',
   'customerProfile.intuneAutopilotOwner': 'Intune/Autopilot environment owner',
   'customerProfile.immediateProductivityRequired': 'Immediate productivity required at first login',
-  'customerProfile.deploymentModelType': 'Deployment model type (pilot/refresh/new hire/ongoing)',
+  'customerProfile.deploymentModelType': 'Deployment model type(s) (pilot/refresh/new hire/ongoing)',
   'customerProfile.multipleDeviceModels': 'Multiple device models involved',
   'readinessCheck.intuneProductionReady': 'Gate 1 — Intune production-ready',
   'readinessCheck.autopilotConfiguredTested': 'Gate 2 — Autopilot configured and tested',

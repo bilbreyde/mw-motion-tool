@@ -28,7 +28,7 @@ const initialState: MotionState = {
     acceptableDeploymentTime: '',
     currentProcessIssues: '',
     devicesPerMonthQuarter: '',
-    deploymentModelType: null,
+    deploymentModelType: [],
     multipleDeviceModels: null,
     firstArticleContact: '',
     pilotSuccessCriteria: '',

@@ -558,23 +558,37 @@ export function Step1_CustomerProfile({ profile, discoveryMode, unvalidatedField
 
       <div className="form-section">
         <div className="form-label">Is this a pilot, refresh, new hire program, or ongoing deployment model?</div>
+        <p style={{ fontSize: '0.82rem', color: 'var(--color-text-muted)', margin: '0 0 8px' }}>
+          Select all that apply — customers may have multiple concurrent deployment scenarios
+          (e.g. a hardware refresh running alongside a new hire program).
+        </p>
         <div className="option-grid option-grid--wide">
-          {DEPLOYMENT_MODEL_TYPES.map(d => (
-            <OptionButton
-              key={d.value}
-              label={d.label}
-              sublabel={d.sublabel}
-              selected={profile.deploymentModelType === d.value}
-              onClick={() => { onUpdate({ deploymentModelType: d.value }); onClearUnvalidated('customerProfile.deploymentModelType'); }}
-            />
-          ))}
+          {DEPLOYMENT_MODEL_TYPES.map(d => {
+            const selected = profile.deploymentModelType.includes(d.value);
+            return (
+              <OptionButton
+                key={d.value}
+                label={d.label}
+                sublabel={d.sublabel}
+                selected={selected}
+                onClick={() => {
+                  onUpdate({
+                    deploymentModelType: selected
+                      ? profile.deploymentModelType.filter(v => v !== d.value)
+                      : [...profile.deploymentModelType, d.value],
+                  });
+                  onClearUnvalidated('customerProfile.deploymentModelType');
+                }}
+              />
+            );
+          })}
           {discoveryMode === 'validation' && (
             <UnvalidatedBtn
               fieldKey="customerProfile.deploymentModelType"
               unvalidatedFields={unvalidatedFields}
               onMark={onMarkUnvalidated}
               onClear={onClearUnvalidated}
-              onNullify={() => onUpdate({ deploymentModelType: null })}
+              onNullify={() => onUpdate({ deploymentModelType: [] })}
             />
           )}
         </div>

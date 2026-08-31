@@ -227,7 +227,7 @@ export function ChecklistPrintView({ state }: Props) {
 
         <Section title="Scale & Planning">
           <Row label="Devices per month/quarter" value={textOrDash(p.devicesPerMonthQuarter)} flagged={uv('customerProfile.devicesPerMonthQuarter')} />
-          <Row label="Deployment model type" value={labelFor(DEPLOYMENT_MODEL_TYPES, p.deploymentModelType)} flagged={uv('customerProfile.deploymentModelType')} />
+          <Row label="Deployment model type" value={labelForMany(DEPLOYMENT_MODEL_TYPES, p.deploymentModelType)} flagged={uv('customerProfile.deploymentModelType')} />
           <Row label="Multiple device models involved?" value={boolText(p.multipleDeviceModels)} flagged={uv('customerProfile.multipleDeviceModels')} />
           <Row label="First-article contact" value={textOrDash(p.firstArticleContact)} flagged={uv('customerProfile.firstArticleContact')} />
           <Row label="Pilot success criteria" value={textOrDash(p.pilotSuccessCriteria)} flagged={uv('customerProfile.pilotSuccessCriteria')} />
