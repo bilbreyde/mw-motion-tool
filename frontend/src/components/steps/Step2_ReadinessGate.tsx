@@ -18,9 +18,9 @@ interface Props {
 }
 
 export const AUTOPILOT_PROFILES: { value: AutopilotProfileType; label: string; sublabel: string }[] = [
-  { value: 'user-driven-aadj', label: 'User-Driven — Azure AD Join', sublabel: 'Device joins Entra ID during OOBE; no DC line-of-sight required' },
-  { value: 'user-driven-haadj', label: 'User-Driven — Hybrid AAD Join', sublabel: 'Domain joins on-prem AD + registers Entra ID; requires DC connectivity' },
-  { value: 'pre-provisioning', label: 'Pre-Provisioning (White Glove)', sublabel: 'Technician phase completes configuration before end-user OOBE' },
+  { value: 'user-driven-aadj', label: 'User-Driven — Entra ID Join', sublabel: 'Device joins Entra ID during OOBE; no DC line-of-sight required' },
+  { value: 'user-driven-haadj', label: 'User-Driven — Hybrid Entra ID Join', sublabel: 'Domain joins on-prem AD + registers Entra ID; requires DC connectivity' },
+  { value: 'pre-provisioning', label: 'Pre-Provisioning (Technician Phase)', sublabel: 'Technician phase completes configuration before end-user OOBE' },
   { value: 'self-deploying', label: 'Self-Deploying', sublabel: 'Zero-touch; device enrolls and configures with no user interaction' },
 ];
 
@@ -165,6 +165,7 @@ export function Step2_ReadinessGate({
           yesLabel={g.yesLabel}
           noLabel={g.noLabel}
           unvalidatedFlagText="Unvalidated — must be confirmed before ordering"
+          tone="gate"
         />
       ))}
 
@@ -199,7 +200,7 @@ export function Step2_ReadinessGate({
                 <p>
                   Which Autopilot profile type is configured? This determines provisioning model
                   compatibility. Pre-Provisioning requires Zones TSC technician access during the
-                  White Glove phase. Hybrid AADJ requires domain controller connectivity at imaging time.
+                  technician phase. Hybrid Entra ID Join (HEAJ) requires domain controller connectivity at imaging time.
                 </p>
               </ConversationalMessage>
               <div className="option-grid option-grid--wide">

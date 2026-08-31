@@ -35,7 +35,7 @@ export const IMAGE_OPTIONS: { value: ImageType; label: string; sublabel: string 
 export const PROVISIONING_OPTIONS: { value: ProvisioningModel; label: string; sublabel: string }[] = [
   {
     value: 'pre-provisioning',
-    label: 'Pre-Provisioning (Technician / White Glove)',
+    label: 'Pre-Provisioning (Technician Phase)',
     sublabel: 'Zones TSC completes device configuration before user-facing OOBE',
   },
   {
@@ -154,7 +154,7 @@ export function Step3_DeploymentModel({
         {readiness.autopilotProfileType === 'user-driven-haadj' && (
           <div className="alert-card alert-card--info">
             <div className="alert-body">
-              Hybrid AADJ profile detected. Pre-Provisioning (White Glove) requires domain
+              Hybrid Entra ID Join (HEAJ) profile detected. Pre-Provisioning (Technician Phase) requires domain
               controller line-of-sight during the technician phase. Confirm network connectivity
               at the Zones staging facility with TSC before selecting this model.
             </div>

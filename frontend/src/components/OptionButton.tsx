@@ -3,7 +3,7 @@ interface OptionButtonProps {
   sublabel?: string;
   selected?: boolean;
   onClick: () => void;
-  variant?: 'default' | 'yes' | 'no';
+  variant?: 'default' | 'yes' | 'no' | 'accent' | 'warn';
   disabled?: boolean;
 }
 
@@ -13,6 +13,8 @@ export function OptionButton({ label, sublabel, selected, onClick, variant = 'de
     selected ? 'option-btn--selected' : '',
     variant === 'yes' ? 'option-btn--yes' : '',
     variant === 'no' ? 'option-btn--no' : '',
+    variant === 'accent' ? 'option-btn--accent' : '',
+    variant === 'warn' ? 'option-btn--warn' : '',
   ].filter(Boolean).join(' ');
 
   return (

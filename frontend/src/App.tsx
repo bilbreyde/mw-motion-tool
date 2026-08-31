@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Sidebar } from './components/Sidebar';
 import { SessionSavedModal } from './components/SessionSavedModal';
 import { DiscoveryModeSelector } from './components/DiscoveryModeSelector';
@@ -54,6 +54,11 @@ export default function App() {
   const [savedModalCode, setSavedModalCode] = useState<string | null>(null);
   const [resumeError, setResumeError] = useState<string | null>(null);
   const [resuming, setResuming] = useState(false);
+
+  const mainContentRef = useRef<HTMLElement>(null);
+  useEffect(() => {
+    mainContentRef.current?.scrollTo({ top: 0 });
+  }, [currentStep]);
 
   async function handleSaveSession() {
     setSaving(true);
@@ -130,11 +135,10 @@ export default function App() {
       answered(engagementTriggers.directToUserShipmentRequired, 'engagementTriggers.directToUserShipmentRequired') &&
       answered(engagementTriggers.adultSignatureRequired, 'engagementTriggers.adultSignatureRequired') &&
       answered(engagementTriggers.assetTagsBiosCustomPackaging, 'engagementTriggers.assetTagsBiosCustomPackaging') &&
-      answered(engagementTriggers.regionalInternationalRequirements, 'engagementTriggers.regionalInternationalRequirements') &&
-      answered(engagementTriggers.holdToCompleteRequired, 'engagementTriggers.holdToCompleteRequired')
+      answered(engagementTriggers.regionalInternationalRequirements, 'engagementTriggers.regionalInternationalRequirements')
     ) completed.add(4);
 
-    if (firstArticle.required !== null && firstArticle.testOrderNeeded !== null) completed.add(5);
+    if (firstArticle.required !== null) completed.add(5);
     if (roadmapOutput.steps.length > 0) completed.add(6);
 
     return completed;
@@ -180,7 +184,7 @@ export default function App() {
         onSaveSession={handleSaveSession}
       />
 
-      <main className="main-content">
+      <main className="main-content" ref={mainContentRef}>
         {isRoutedToProServices ? (
           <ProServicesRoute
             profile={customerProfile}

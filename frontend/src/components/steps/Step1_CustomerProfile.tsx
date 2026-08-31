@@ -35,13 +35,15 @@ export const INDUSTRIES: { value: Industry; label: string }[] = [
 export const OS_OPTIONS: { value: PrimaryOs; label: string; sublabel: string }[] = [
   { value: 'windows', label: 'Windows', sublabel: 'Exclusively or primarily Windows' },
   { value: 'mac', label: 'macOS', sublabel: 'Exclusively or primarily macOS' },
-  { value: 'mixed', label: 'Mixed Fleet', sublabel: 'Windows and macOS co-exist' },
+  { value: 'ios', label: 'iOS', sublabel: 'Apple mobile devices in scope' },
+  { value: 'android', label: 'Android', sublabel: 'Android mobile devices in scope' },
+  { value: 'linux', label: 'Linux', sublabel: 'Linux desktop or workstation devices in scope' },
 ];
 
 export const ENTRA_JOIN_TYPES: { value: EntraJoinType; label: string; sublabel: string }[] = [
-  { value: 'azure-ad-join', label: 'Azure AD Join (AAD Join)', sublabel: 'Cloud-only — Entra ID native, no on-prem AD dependency' },
-  { value: 'hybrid-aadj', label: 'Hybrid Azure AD Join (HAADJ)', sublabel: 'Devices joined to on-prem AD and registered in Entra ID' },
-  { value: 'ad-ds-only', label: 'AD DS Only', sublabel: 'Traditional on-prem domain join — no Entra ID / Azure AD' },
+  { value: 'azure-ad-join', label: 'Entra ID Join', sublabel: 'Cloud-only — Entra ID native, no on-prem AD dependency' },
+  { value: 'hybrid-aadj', label: 'Hybrid Entra ID Join (HEAJ)', sublabel: 'Devices joined to on-prem AD and registered in Entra ID' },
+  { value: 'ad-ds-only', label: 'AD DS Only', sublabel: 'Traditional on-prem domain join — no Entra ID' },
 ];
 
 export const CO_MGMT_OPTIONS: { value: CoManagementStatus; label: string; sublabel: string }[] = [
@@ -201,23 +203,36 @@ export function Step1_CustomerProfile({ profile, discoveryMode, unvalidatedField
 
       <div className="form-section">
         <div className="form-label">Primary OS Platform</div>
+        <p style={{ fontSize: '0.82rem', color: 'var(--color-text-muted)', margin: '0 0 8px' }}>
+          Select all that apply — customers may have multiple OS platforms in scope.
+        </p>
         <div className="option-grid">
-          {OS_OPTIONS.map(o => (
-            <OptionButton
-              key={o.value}
-              label={o.label}
-              sublabel={o.sublabel}
-              selected={profile.primaryOs === o.value}
-              onClick={() => { onUpdate({ primaryOs: o.value }); onClearUnvalidated('customerProfile.primaryOs'); }}
-            />
-          ))}
+          {OS_OPTIONS.map(o => {
+            const selected = profile.primaryOs.includes(o.value);
+            return (
+              <OptionButton
+                key={o.value}
+                label={o.label}
+                sublabel={o.sublabel}
+                selected={selected}
+                onClick={() => {
+                  onUpdate({
+                    primaryOs: selected
+                      ? profile.primaryOs.filter(v => v !== o.value)
+                      : [...profile.primaryOs, o.value],
+                  });
+                  onClearUnvalidated('customerProfile.primaryOs');
+                }}
+              />
+            );
+          })}
           {discoveryMode === 'validation' && (
             <UnvalidatedBtn
               fieldKey="customerProfile.primaryOs"
               unvalidatedFields={unvalidatedFields}
               onMark={onMarkUnvalidated}
               onClear={onClearUnvalidated}
-              onNullify={() => onUpdate({ primaryOs: null })}
+              onNullify={() => onUpdate({ primaryOs: [] })}
             />
           )}
         </div>
@@ -231,7 +246,7 @@ export function Step1_CustomerProfile({ profile, discoveryMode, unvalidatedField
             <p>
               What is the device join type for the target device population? Confirm this with the
               identity team — check Entra ID portal &gt; Devices &gt; All devices and verify the join
-              type column. Hybrid AADJ requires line-of-sight to a domain controller during OOBE.
+              type column. Hybrid Entra ID Join (HEAJ) requires line-of-sight to a domain controller during OOBE.
             </p>
           </ConversationalMessage>
         )}

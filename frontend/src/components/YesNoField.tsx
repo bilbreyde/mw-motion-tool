@@ -19,14 +19,20 @@ interface Props {
   noLabel: string;
   noSublabel?: string;
   unvalidatedFlagText?: string;
+  // 'neutral' (default) — data collection only, Yes/No both use the same accent highlight.
+  // 'gate' — Step 2 readiness gate go/no-go: Yes = green (pass), No = red (blocking).
+  // 'warn' — No triggers a routing change or blocking warning, but is not a hard stop: No = amber.
+  tone?: 'neutral' | 'gate' | 'warn';
 }
 
 export function YesNoField({
   label, liveCopy, validationCopy, value, fieldKey, discoveryMode, unvalidatedFields,
   onChange, onMarkUnvalidated, onClearUnvalidated,
-  yesLabel, yesSublabel, noLabel, noSublabel, unvalidatedFlagText,
+  yesLabel, yesSublabel, noLabel, noSublabel, unvalidatedFlagText, tone = 'neutral',
 }: Props) {
   const uv = unvalidatedFields.includes(fieldKey);
+  const yesVariant = tone === 'gate' ? 'yes' : 'accent';
+  const noVariant = tone === 'gate' ? 'no' : tone === 'warn' ? 'warn' : 'accent';
 
   function handleChange(v: boolean) {
     onChange(v);
@@ -54,14 +60,14 @@ export function YesNoField({
           sublabel={yesSublabel}
           selected={value === true}
           onClick={() => handleChange(true)}
-          variant="yes"
+          variant={yesVariant}
         />
         <OptionButton
           label={noLabel}
           sublabel={noSublabel}
           selected={value === false}
           onClick={() => handleChange(false)}
-          variant="no"
+          variant={noVariant}
         />
         {discoveryMode === 'validation' && (
           <button

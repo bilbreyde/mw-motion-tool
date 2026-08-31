@@ -17,7 +17,7 @@ export type AutopilotProfileType = 'user-driven-aadj' | 'user-driven-haadj' | 'p
 export type MdmPlatform = 'intune' | 'jamf' | 'workspace-one' | 'none' | 'other';
 export type DeviceVolume = '1-50' | '51-250' | '251-1000' | '1000+';
 export type DeploymentTimeline = 'immediate' | '1-3months' | '3-6months' | '6months+';
-export type PrimaryOs = 'windows' | 'mac' | 'mixed';
+export type PrimaryOs = 'windows' | 'mac' | 'ios' | 'android' | 'linux';
 export type ImageType = 'clean-image' | 'oem-ready';
 export type ProvisioningModel = 'pre-provisioning' | 'user-driven' | 'hybrid';
 export type Owner = 'SA' | 'TSC' | 'Cloud Services' | 'Customer' | 'Account Team';
@@ -34,7 +34,7 @@ export interface CustomerProfile {
   saName: string;
   sellerName: string;
   industry: Industry | null;
-  primaryOs: PrimaryOs | null;
+  primaryOs: PrimaryOs[];
   entraJoinType: EntraJoinType | null;
   coManagementStatus: CoManagementStatus | null;
   mdmPlatform: MdmPlatform[];
@@ -126,12 +126,10 @@ export interface EngagementTriggers {
   assetTagsBiosCustomPackagingDetail: string;
   regionalInternationalRequirements: boolean | null;
   regionalInternationalRequirementsDetail: string;
-  holdToCompleteRequired: boolean | null;
 }
 
 export interface FirstArticle {
   required: boolean | null;
-  testOrderNeeded: boolean | null;
   validationCriteria: string[];
   aiGuidance: string;
   loading: boolean;

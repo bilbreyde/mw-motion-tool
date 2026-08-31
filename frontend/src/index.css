@@ -457,6 +457,22 @@ p { color: var(--color-text-secondary); line-height: 1.7; }
   color: var(--color-danger);
 }
 
+/* Neutral accent — used for Yes/No data-collection questions where selection */
+/* itself is the only signal (no pass/fail or blocking semantics). */
+.option-btn--accent.option-btn--selected {
+  border-color: var(--color-accent);
+  background: var(--color-accent-dim);
+  color: var(--color-text-primary);
+}
+
+/* Warn — No triggers a routing change or warning, but is not a hard stop. */
+.option-btn--warn:hover,
+.option-btn--warn.option-btn--selected {
+  border-color: var(--color-warning);
+  background: var(--color-warning-dim);
+  color: var(--color-warning);
+}
+
 .option-label {
   display: block;
   font-weight: 500;

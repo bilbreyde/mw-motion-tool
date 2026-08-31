@@ -95,7 +95,6 @@ const FIELD_LABELS: Record<string, string> = {
   'engagementTriggers.adultSignatureRequired': 'Adult signature required',
   'engagementTriggers.assetTagsBiosCustomPackaging': 'Asset tags / BIOS / custom packaging required',
   'engagementTriggers.regionalInternationalRequirements': 'Regional or international deployment requirements',
-  'engagementTriggers.holdToCompleteRequired': 'Hold-to-complete process required',
 };
 
 export function Step6_RoadmapOutput({ state, onUpdateRoadmap, onReset, onEditStep }: Props) {
@@ -253,7 +252,7 @@ export function Step6_RoadmapOutput({ state, onUpdateRoadmap, onReset, onEditSte
               <div style={{ textAlign: 'right', fontSize: '0.82rem', color: 'var(--color-text-muted)', lineHeight: 1.8 }}>
                 <div>IT Stakeholder: {engagementTriggers.customerItPocConfirmed ? '✓' : '✗'}</div>
                 <div>TSC Aligned: {engagementTriggers.tscAlignmentScheduled ? '✓' : '✗'}</div>
-                <div>First Article: {firstArticle.required ? 'Required' : 'Waived'}</div>
+                <div>First Article: {firstArticle.required ? 'Required' : 'Pending'}</div>
                 <div>Cloud Services: {engagementTriggers.cloudServicesEngaged ? '✓' : '✗'}</div>
                 {unvalidatedFields.length > 0 && (
                   <div style={{ color: 'var(--color-warning)' }}>Unvalidated: {unvalidatedFields.length}</div>
@@ -270,7 +269,7 @@ export function Step6_RoadmapOutput({ state, onUpdateRoadmap, onReset, onEditSte
               {
                 label: 'Join Type',
                 value: customerProfile.entraJoinType
-                ? ({ 'azure-ad-join': 'Azure AD Join', 'hybrid-aadj': 'Hybrid AADJ', 'ad-ds-only': 'AD DS Only' } as Record<string, string>)[customerProfile.entraJoinType] ?? '—'
+                ? ({ 'azure-ad-join': 'Entra ID Join', 'hybrid-aadj': 'Hybrid Entra ID Join (HEAJ)', 'ad-ds-only': 'AD DS Only' } as Record<string, string>)[customerProfile.entraJoinType] ?? '—'
                 : '—',
               },
               {

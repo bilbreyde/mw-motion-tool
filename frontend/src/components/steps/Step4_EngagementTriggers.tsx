@@ -50,8 +50,7 @@ export function Step4_EngagementTriggers({
     (triggers.directToUserShipmentRequired !== null || uv('engagementTriggers.directToUserShipmentRequired')) &&
     (triggers.adultSignatureRequired !== null || uv('engagementTriggers.adultSignatureRequired')) &&
     (triggers.assetTagsBiosCustomPackaging !== null || uv('engagementTriggers.assetTagsBiosCustomPackaging')) &&
-    (triggers.regionalInternationalRequirements !== null || uv('engagementTriggers.regionalInternationalRequirements')) &&
-    (triggers.holdToCompleteRequired !== null || uv('engagementTriggers.holdToCompleteRequired'));
+    (triggers.regionalInternationalRequirements !== null || uv('engagementTriggers.regionalInternationalRequirements'));
 
   const blockers: string[] = [];
   if (triggers.tscAlignmentScheduled === false && !uv('engagementTriggers.tscAlignmentScheduled'))
@@ -92,6 +91,7 @@ export function Step4_EngagementTriggers({
         noLabel="No — Not yet confirmed"
         noSublabel="Need to identify IT decision-maker before proceeding"
         unvalidatedFlagText="Unvalidated — confirm with account team"
+        tone="warn"
       />
       {triggers.customerItPocConfirmed === false && !uv('engagementTriggers.customerItPocConfirmed') && (
         <div className="alert-card alert-card--warning" style={{ marginTop: -12, marginBottom: 24 }}>
@@ -119,6 +119,7 @@ export function Step4_EngagementTriggers({
         noLabel="No — Not yet scheduled"
         noSublabel="REQUIRED before any device order"
         unvalidatedFlagText="Unvalidated — confirm with account team"
+        tone="warn"
       />
       {triggers.tscAlignmentScheduled === false && !uv('engagementTriggers.tscAlignmentScheduled') && (
         <div className="alert-card alert-card--danger" style={{ marginTop: -12, marginBottom: 24 }}>
@@ -147,6 +148,7 @@ export function Step4_EngagementTriggers({
         noLabel="No — Not yet engaged"
         noSublabel="Recommended before finalizing scope"
         unvalidatedFlagText="Unvalidated — confirm with account team"
+        tone="warn"
       />
       {triggers.cloudServicesEngaged === false && !uv('engagementTriggers.cloudServicesEngaged') && (
         <div className="alert-card alert-card--warning" style={{ marginTop: -12, marginBottom: 24 }}>
@@ -171,7 +173,17 @@ export function Step4_EngagementTriggers({
               label={m.label}
               sublabel={m.sublabel}
               selected={triggers.deviceImportMethod === m.value}
-              onClick={() => { onUpdate({ deviceImportMethod: m.value }); onClearUnvalidated('engagementTriggers.deviceImportMethod'); }}
+              onClick={() => {
+                const updates: Partial<EngagementTriggers> = { deviceImportMethod: m.value };
+                if (m.value === 'oem-direct') {
+                  // OEM Direct Registration implies OEM handles enrollment — skip the follow-up question.
+                  updates.enrollmentHandledBy = 'oem';
+                } else if (triggers.deviceImportMethod === 'oem-direct') {
+                  updates.enrollmentHandledBy = null;
+                }
+                onUpdate(updates);
+                onClearUnvalidated('engagementTriggers.deviceImportMethod');
+              }}
             />
           ))}
           {discoveryMode === 'validation' && (
@@ -187,30 +199,39 @@ export function Step4_EngagementTriggers({
         {uv('engagementTriggers.deviceImportMethod') && <div className="unvalidated-flag">⚠ Unvalidated — confirm with account team</div>}
       </div>
 
-      <div className="form-section">
-        <div className="form-label">Will enrollment be handled through OEM or Zones?</div>
-        <div className="option-grid">
-          {ENROLLMENT_HANDLERS.map(e => (
-            <OptionButton
-              key={e.value}
-              label={e.label}
-              sublabel={e.sublabel}
-              selected={triggers.enrollmentHandledBy === e.value}
-              onClick={() => { onUpdate({ enrollmentHandledBy: e.value }); onClearUnvalidated('engagementTriggers.enrollmentHandledBy'); }}
-            />
-          ))}
-          {discoveryMode === 'validation' && (
-            <UnvalidatedBtn
-              fieldKey="engagementTriggers.enrollmentHandledBy"
-              unvalidatedFields={unvalidatedFields}
-              onMark={onMarkUnvalidated}
-              onClear={onClearUnvalidated}
-              onNullify={() => onUpdate({ enrollmentHandledBy: null })}
-            />
-          )}
+      {triggers.deviceImportMethod !== null && triggers.deviceImportMethod !== 'oem-direct' && (
+        <div className="form-section">
+          <div className="form-label">Will enrollment be handled through OEM or Zones?</div>
+          <div className="option-grid">
+            {ENROLLMENT_HANDLERS.map(e => (
+              <OptionButton
+                key={e.value}
+                label={e.label}
+                sublabel={e.sublabel}
+                selected={triggers.enrollmentHandledBy === e.value}
+                onClick={() => { onUpdate({ enrollmentHandledBy: e.value }); onClearUnvalidated('engagementTriggers.enrollmentHandledBy'); }}
+              />
+            ))}
+            {discoveryMode === 'validation' && (
+              <UnvalidatedBtn
+                fieldKey="engagementTriggers.enrollmentHandledBy"
+                unvalidatedFields={unvalidatedFields}
+                onMark={onMarkUnvalidated}
+                onClear={onClearUnvalidated}
+                onNullify={() => onUpdate({ enrollmentHandledBy: null })}
+              />
+            )}
+          </div>
+          {uv('engagementTriggers.enrollmentHandledBy') && <div className="unvalidated-flag">⚠ Unvalidated — confirm with account team</div>}
         </div>
-        {uv('engagementTriggers.enrollmentHandledBy') && <div className="unvalidated-flag">⚠ Unvalidated — confirm with account team</div>}
-      </div>
+      )}
+      {triggers.deviceImportMethod === 'oem-direct' && (
+        <div className="alert-card alert-card--info">
+          <div className="alert-body">
+            OEM Direct Registration selected — enrollment is handled by the OEM. No separate enrollment handoff question is needed.
+          </div>
+        </div>
+      )}
 
       <TextField
         label="What information must be associated with devices? (Group Tag, Order ID, Purchase Order, etc.)"
@@ -320,7 +341,7 @@ export function Step4_EngagementTriggers({
       )}
 
       <YesNoField
-        label="Are there regional or international deployment requirements?"
+        label="Is this deployment domestic only, or are there regional or international requirements?"
         value={triggers.regionalInternationalRequirements}
         fieldKey="engagementTriggers.regionalInternationalRequirements"
         discoveryMode={discoveryMode}
@@ -328,8 +349,8 @@ export function Step4_EngagementTriggers({
         onChange={v => onUpdate({ regionalInternationalRequirements: v })}
         onMarkUnvalidated={onMarkUnvalidated}
         onClearUnvalidated={onClearUnvalidated}
-        yesLabel="Yes — regional/international requirements exist"
-        noLabel="No — domestic only"
+        yesLabel="Regional / international requirements exist"
+        noLabel="Domestic only"
       />
 
       {triggers.regionalInternationalRequirements === true && (
@@ -346,19 +367,6 @@ export function Step4_EngagementTriggers({
           multiline
         />
       )}
-
-      <YesNoField
-        label="Is a hold-to-complete process required before shipment?"
-        value={triggers.holdToCompleteRequired}
-        fieldKey="engagementTriggers.holdToCompleteRequired"
-        discoveryMode={discoveryMode}
-        unvalidatedFields={unvalidatedFields}
-        onChange={v => onUpdate({ holdToCompleteRequired: v })}
-        onMarkUnvalidated={onMarkUnvalidated}
-        onClearUnvalidated={onClearUnvalidated}
-        yesLabel="Yes — hold-to-complete required"
-        noLabel="No — ship as devices complete"
-      />
 
       {allAnswered && blockers.length === 0 && uvCount === 0 && (
         <div className="alert-card alert-card--success">

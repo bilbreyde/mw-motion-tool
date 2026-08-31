@@ -140,7 +140,7 @@ export function ChecklistPrintView({ state }: Props) {
 
         <Section title="Current Environment">
           <Row label="Industry Vertical" value={labelFor(INDUSTRIES, p.industry)} flagged={uv('customerProfile.industry')} />
-          <Row label="Primary OS Platform" value={labelFor(OS_OPTIONS, p.primaryOs)} flagged={uv('customerProfile.primaryOs')} />
+          <Row label="Primary OS Platform" value={labelForMany(OS_OPTIONS, p.primaryOs)} flagged={uv('customerProfile.primaryOs')} />
           <Row label="Entra ID / Directory Join Type" value={labelFor(ENTRA_JOIN_TYPES, p.entraJoinType)} flagged={uv('customerProfile.entraJoinType')} />
           <Row label="Co-management / ConfigMgr Status" value={labelFor(CO_MGMT_OPTIONS, p.coManagementStatus)} flagged={uv('customerProfile.coManagementStatus')} />
           <Row label="MDM Platform(s)" value={labelForMany(MDM_PLATFORMS, p.mdmPlatform)} flagged={uv('customerProfile.mdmPlatform')} />
@@ -215,7 +215,6 @@ export function ChecklistPrintView({ state }: Props) {
           {e.regionalInternationalRequirements === true && (
             <Row label="Regional / international detail" value={textOrDash(e.regionalInternationalRequirementsDetail)} flagged={false} />
           )}
-          <Row label="Hold-to-complete process required?" value={boolText(e.holdToCompleteRequired)} flagged={uv('engagementTriggers.holdToCompleteRequired')} />
         </Section>
 
         <Section title="User Experience">
@@ -235,8 +234,7 @@ export function ChecklistPrintView({ state }: Props) {
         </Section>
 
         <Section title="First Article">
-          <Row label="First article required?" value={boolText(f.required)} flagged={false} />
-          <Row label="Test order needed from Zones?" value={boolText(f.testOrderNeeded)} flagged={false} />
+          <Row label="First article required?" value="Always required — non-negotiable" flagged={false} />
           {f.validationCriteria.length > 0 && (
             <Row label="SA-defined validation criteria" value={f.validationCriteria.join('; ')} flagged={false} />
           )}
