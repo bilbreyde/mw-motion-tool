@@ -29,9 +29,11 @@ export const ENROLLMENT_HANDLERS: { value: EnrollmentHandledBy; label: string; s
 ];
 
 export const SHIP_TO_LOCATIONS: { value: ShipToLocation; label: string; sublabel: string }[] = [
-  { value: 'home', label: 'End User Home', sublabel: 'Direct-to-home shipment' },
-  { value: 'office', label: 'Customer Office', sublabel: 'Shipped to a customer site' },
-  { value: 'distribution-center', label: 'Distribution Center', sublabel: 'Staged at a DC before final delivery' },
+  { value: 'home', label: 'End-User Home Addresses', sublabel: 'Direct-to-home shipment' },
+  { value: 'office', label: 'Customer Office / Headquarters', sublabel: 'Shipped to a customer site' },
+  { value: 'distribution-center', label: 'Regional Distribution Center', sublabel: 'Staged at a DC before final delivery' },
+  { value: 'zones-tsc-hold', label: 'Zones TSC (Pre-Provisioning Hold)', sublabel: 'Held at Zones TSC for technician-phase configuration' },
+  { value: 'international', label: 'International Destination', sublabel: 'Ships outside the domestic region' },
 ];
 
 export function Step4_EngagementTriggers({
@@ -46,7 +48,7 @@ export function Step4_EngagementTriggers({
     (triggers.cloudServicesEngaged !== null || uv('engagementTriggers.cloudServicesEngaged')) &&
     (triggers.deviceImportMethod !== null || uv('engagementTriggers.deviceImportMethod')) &&
     (triggers.enrollmentHandledBy !== null || uv('engagementTriggers.enrollmentHandledBy')) &&
-    (triggers.shipToLocation !== null || uv('engagementTriggers.shipToLocation')) &&
+    (triggers.shipToLocation.length > 0 || uv('engagementTriggers.shipToLocation')) &&
     (triggers.directToUserShipmentRequired !== null || uv('engagementTriggers.directToUserShipmentRequired')) &&
     (triggers.adultSignatureRequired !== null || uv('engagementTriggers.adultSignatureRequired')) &&
     (triggers.assetTagsBiosCustomPackaging !== null || uv('engagementTriggers.assetTagsBiosCustomPackaging')) &&
@@ -246,40 +248,41 @@ export function Step4_EngagementTriggers({
         multiline
       />
 
-      <TextField
-        label="Who validates Autopilot registration prior to deployment?"
-        value={triggers.autopilotRegistrationValidator}
-        placeholder="e.g. Customer IT team, Zones TSC"
-        fieldKey="engagementTriggers.autopilotRegistrationValidator"
-        discoveryMode={discoveryMode}
-        unvalidatedFields={unvalidatedFields}
-        onChange={v => onUpdate({ autopilotRegistrationValidator: v })}
-        onMarkUnvalidated={onMarkUnvalidated}
-        onClearUnvalidated={onClearUnvalidated}
-      />
-
       {/* Category 6 - Deployment Logistics */}
       <h3 className="category-heading">Deployment Logistics</h3>
 
       <div className="form-section">
         <div className="form-label">Where will devices be shipped?</div>
+        <p style={{ fontSize: '0.82rem', color: 'var(--color-text-muted)', margin: '0 0 8px' }}>
+          Select all that apply — devices may ship to multiple destination types.
+        </p>
         <div className="option-grid">
-          {SHIP_TO_LOCATIONS.map(s => (
-            <OptionButton
-              key={s.value}
-              label={s.label}
-              sublabel={s.sublabel}
-              selected={triggers.shipToLocation === s.value}
-              onClick={() => { onUpdate({ shipToLocation: s.value }); onClearUnvalidated('engagementTriggers.shipToLocation'); }}
-            />
-          ))}
+          {SHIP_TO_LOCATIONS.map(s => {
+            const selected = triggers.shipToLocation.includes(s.value);
+            return (
+              <OptionButton
+                key={s.value}
+                label={s.label}
+                sublabel={s.sublabel}
+                selected={selected}
+                onClick={() => {
+                  onUpdate({
+                    shipToLocation: selected
+                      ? triggers.shipToLocation.filter(v => v !== s.value)
+                      : [...triggers.shipToLocation, s.value],
+                  });
+                  onClearUnvalidated('engagementTriggers.shipToLocation');
+                }}
+              />
+            );
+          })}
           {discoveryMode === 'validation' && (
             <UnvalidatedBtn
               fieldKey="engagementTriggers.shipToLocation"
               unvalidatedFields={unvalidatedFields}
               onMark={onMarkUnvalidated}
               onClear={onClearUnvalidated}
-              onNullify={() => onUpdate({ shipToLocation: null })}
+              onNullify={() => onUpdate({ shipToLocation: [] })}
             />
           )}
         </div>

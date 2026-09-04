@@ -5,7 +5,7 @@ import {
   INDUSTRIES, OS_OPTIONS, ENTRA_JOIN_TYPES, CO_MGMT_OPTIONS, MDM_PLATFORMS,
   DEVICE_VOLUMES, TIMELINES, INTUNE_AUTOPILOT_OWNERS, DEPLOYMENT_MODEL_TYPES,
 } from './steps/Step1_CustomerProfile';
-import { AUTOPILOT_PROFILES, PROVISIONING_PREFERENCES } from './steps/Step2_ReadinessGate';
+import { AUTOPILOT_PROFILES } from './steps/Step2_ReadinessGate';
 import { IMAGE_OPTIONS, PROVISIONING_OPTIONS } from './steps/Step3_DeploymentModel';
 import { DEVICE_IMPORT_METHODS, ENROLLMENT_HANDLERS, SHIP_TO_LOCATIONS } from './steps/Step4_EngagementTriggers';
 
@@ -71,7 +71,7 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
 }
 
 export function ChecklistPrintView({ state }: Props) {
-  const { customerProfile: p, readinessCheck: r, deploymentRecommendation: d, engagementTriggers: e, firstArticle: f, discoveryMode, unvalidatedFields } = state;
+  const { customerProfile: p, readinessCheck: r, deploymentRecommendation: d, engagementTriggers: e, firstArticle: f, roadmapOutput: rm, discoveryMode, unvalidatedFields } = state;
   const uv = (key: string) => unvalidatedFields.includes(key);
 
   const gateFields: [string, boolean | null, string][] = [
@@ -159,11 +159,10 @@ export function ChecklistPrintView({ state }: Props) {
           <Row label="Device groups / dynamic assignments configured?" value={boolText(r.deviceGroupsConfigured)} flagged={uv('readinessCheck.deviceGroupsConfigured')} />
           <Row label="Group Tags required for deployment?" value={boolText(r.groupTagsRequired)} flagged={uv('readinessCheck.groupTagsRequired')} />
           <Row label="Enrollment Status Page (ESP) configured?" value={boolText(r.espConfigured)} flagged={uv('readinessCheck.espConfigured')} />
-          <Row label="Enrollment restrictions / Conditional Access impact?" value={boolText(r.enrollmentRestrictionsExist)} flagged={uv('readinessCheck.enrollmentRestrictionsExist')} />
-          {r.enrollmentRestrictionsExist === true && (
+          <Row label="Verified no enrollment restrictions / Conditional Access impact?" value={boolText(r.enrollmentRestrictionsVerifiedClean)} flagged={uv('readinessCheck.enrollmentRestrictionsVerifiedClean')} />
+          {r.enrollmentRestrictionsVerifiedClean === false && (
             <Row label="Enrollment restriction detail" value={textOrDash(r.enrollmentRestrictionsDetail)} flagged={false} />
           )}
-          <Row label="Provisioning preference" value={labelFor(PROVISIONING_PREFERENCES, r.provisioningPreference)} flagged={uv('readinessCheck.provisioningPreference')} />
         </Section>
 
         <Section title="Deployment Model">
@@ -173,11 +172,14 @@ export function ChecklistPrintView({ state }: Props) {
 
         <Section title="Application Readiness">
           <Row label="Pre-provisioning software list" value={textOrDash(d.preProvisioningSoftwareList)} flagged={uv('deploymentRecommendation.preProvisioningSoftwareList')} />
-          <Row label="Applications with lengthy install times?" value={boolText(d.appsWithLengthyInstall)} flagged={uv('deploymentRecommendation.appsWithLengthyInstall')} />
-          {d.appsWithLengthyInstall === true && (
+          <Row label="Verified all application install times acceptable?" value={boolText(d.appsInstallTimesAcceptable)} flagged={uv('deploymentRecommendation.appsInstallTimesAcceptable')} />
+          {d.appsInstallTimesAcceptable === false && (
             <Row label="Lengthy-install application detail" value={textOrDash(d.appsWithLengthyInstallDetail)} flagged={false} />
           )}
-          <Row label="Applications dependent on user credentials?" value={boolText(d.appsDependOnUserCreds)} flagged={uv('deploymentRecommendation.appsDependOnUserCreds')} />
+          <Row label="Verified no credential-dependent applications?" value={boolText(d.appsNoCredentialDependency)} flagged={uv('deploymentRecommendation.appsNoCredentialDependency')} />
+          {d.appsNoCredentialDependency === false && (
+            <Row label="Credential-dependent application detail" value={textOrDash(d.appsDependOnUserCredsDetail)} flagged={false} />
+          )}
         </Section>
 
         <Section title="Device Configuration">
@@ -200,11 +202,10 @@ export function ChecklistPrintView({ state }: Props) {
           <Row label="Device import method into Autopilot" value={labelFor(DEVICE_IMPORT_METHODS, e.deviceImportMethod)} flagged={uv('engagementTriggers.deviceImportMethod')} />
           <Row label="Enrollment handled by" value={labelFor(ENROLLMENT_HANDLERS, e.enrollmentHandledBy)} flagged={uv('engagementTriggers.enrollmentHandledBy')} />
           <Row label="Device-associated info (Group Tag, PO, Order ID)" value={textOrDash(e.deviceAssociatedInfo)} flagged={uv('engagementTriggers.deviceAssociatedInfo')} />
-          <Row label="Autopilot registration validated by" value={textOrDash(e.autopilotRegistrationValidator)} flagged={uv('engagementTriggers.autopilotRegistrationValidator')} />
         </Section>
 
         <Section title="Deployment Logistics">
-          <Row label="Ship-to location" value={labelFor(SHIP_TO_LOCATIONS, e.shipToLocation)} flagged={uv('engagementTriggers.shipToLocation')} />
+          <Row label="Ship-to location(s)" value={labelForMany(SHIP_TO_LOCATIONS, e.shipToLocation)} flagged={uv('engagementTriggers.shipToLocation')} />
           <Row label="Direct-to-user shipment required?" value={boolText(e.directToUserShipmentRequired)} flagged={uv('engagementTriggers.directToUserShipmentRequired')} />
           <Row label="Adult signature required?" value={boolText(e.adultSignatureRequired)} flagged={uv('engagementTriggers.adultSignatureRequired')} />
           <Row label="Asset tags / BIOS / custom packaging required?" value={boolText(e.assetTagsBiosCustomPackaging)} flagged={uv('engagementTriggers.assetTagsBiosCustomPackaging')} />
@@ -239,6 +240,22 @@ export function ChecklistPrintView({ state }: Props) {
             <Row label="SA-defined validation criteria" value={f.validationCriteria.join('; ')} flagged={false} />
           )}
         </Section>
+
+        {rm.steps.length > 0 && (
+          <div className="checklist-section">
+            <div className="checklist-section-title">Roadmap Timeline</div>
+            <table className="checklist-table">
+              <tbody>
+                {rm.steps.map(step => (
+                  <tr key={step.id}>
+                    <td className="checklist-q">{step.phase} — {step.action}</td>
+                    <td className="checklist-a">{step.owner} · {step.timeline}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
 
         <div className="checklist-footer">
           Zones Digital Workplace — Validation Criteria Checklist — Generated {new Date().toLocaleString('en-US')} — For TSC / CSP handoff use only

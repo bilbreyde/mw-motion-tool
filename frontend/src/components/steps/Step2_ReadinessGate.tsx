@@ -3,7 +3,7 @@ import { ConversationalMessage } from '../ConversationalMessage';
 import { OptionButton } from '../OptionButton';
 import { YesNoField } from '../YesNoField';
 import { TextField } from '../TextField';
-import type { CustomerProfile, ReadinessCheck, DiscoveryMode, AutopilotProfileType, ProvisioningPreference } from '../../types';
+import type { CustomerProfile, ReadinessCheck, DiscoveryMode, AutopilotProfileType } from '../../types';
 
 interface Props {
   profile: CustomerProfile;
@@ -22,11 +22,6 @@ export const AUTOPILOT_PROFILES: { value: AutopilotProfileType; label: string; s
   { value: 'user-driven-haadj', label: 'User-Driven — Hybrid Entra ID Join', sublabel: 'Domain joins on-prem AD + registers Entra ID; requires DC connectivity' },
   { value: 'pre-provisioning', label: 'Pre-Provisioning (Technician Phase)', sublabel: 'Technician phase completes configuration before end-user OOBE' },
   { value: 'self-deploying', label: 'Self-Deploying', sublabel: 'Zero-touch; device enrolls and configures with no user interaction' },
-];
-
-export const PROVISIONING_PREFERENCES: { value: ProvisioningPreference; label: string; sublabel: string }[] = [
-  { value: 'standard', label: 'Standard Provisioned', sublabel: 'Device ships as-is; Autopilot completes configuration at the customer site' },
-  { value: 'pre-provisioned', label: 'Pre-Provisioned', sublabel: 'Zones TSC completes technician-phase configuration before shipment' },
 ];
 
 interface GateQuestion {
@@ -113,10 +108,9 @@ export function Step2_ReadinessGate({
   const gatesPassed = gateAnswered && !blocked;
 
   const category2Keys: (keyof ReadinessCheck)[] = [
-    'deploymentProfilesValidated', 'deviceGroupsConfigured', 'groupTagsRequired', 'espConfigured', 'enrollmentRestrictionsExist',
+    'deploymentProfilesValidated', 'deviceGroupsConfigured', 'groupTagsRequired', 'espConfigured', 'enrollmentRestrictionsVerifiedClean',
   ];
-  const category2Answered = category2Keys.every(k => readiness[k] !== null || uv(`readinessCheck.${k}`))
-    && (readiness.provisioningPreference !== null || uv('readinessCheck.provisioningPreference'));
+  const category2Answered = category2Keys.every(k => readiness[k] !== null || uv(`readinessCheck.${k}`));
 
   const canProceed = gatesPassed && category2Answered;
 
@@ -200,7 +194,7 @@ export function Step2_ReadinessGate({
                 <p>
                   Which Autopilot profile type is configured? This determines provisioning model
                   compatibility. Pre-Provisioning requires Zones TSC technician access during the
-                  technician phase. Hybrid Entra ID Join (HEAJ) requires domain controller connectivity at imaging time.
+                  technician phase. Hybrid Entra ID Join (HEID) requires domain controller connectivity at imaging time.
                 </p>
               </ConversationalMessage>
               <div className="option-grid option-grid--wide">
@@ -270,21 +264,22 @@ export function Step2_ReadinessGate({
           />
 
           <YesNoField
-            label="Are there any enrollment restrictions or Conditional Access policies that could impact provisioning?"
-            value={readiness.enrollmentRestrictionsExist}
-            fieldKey="readinessCheck.enrollmentRestrictionsExist"
+            label="Verify there are no enrollment restrictions or Conditional Access policies that could impact provisioning."
+            value={readiness.enrollmentRestrictionsVerifiedClean}
+            fieldKey="readinessCheck.enrollmentRestrictionsVerifiedClean"
             discoveryMode={discoveryMode}
             unvalidatedFields={unvalidatedFields}
-            onChange={v => onUpdate({ enrollmentRestrictionsExist: v })}
+            onChange={v => onUpdate({ enrollmentRestrictionsVerifiedClean: v })}
             onMarkUnvalidated={onMarkUnvalidated}
             onClearUnvalidated={onClearUnvalidated}
-            yesLabel="Yes — restrictions exist"
-            noLabel="No — no restrictions"
+            yesLabel="Yes — verified restriction-free"
+            noLabel="No — restrictions exist"
+            tone="gate"
           />
 
-          {readiness.enrollmentRestrictionsExist === true && (
+          {readiness.enrollmentRestrictionsVerifiedClean === false && (
             <TextField
-              label="Describe the enrollment restrictions or Conditional Access policies"
+              label="Describe the restrictions or policies that apply"
               value={readiness.enrollmentRestrictionsDetail}
               placeholder="e.g. CA policy blocks enrollment from untrusted networks; device limit restrictions"
               fieldKey="readinessCheck.enrollmentRestrictionsDetail"
@@ -296,22 +291,6 @@ export function Step2_ReadinessGate({
               multiline
             />
           )}
-
-          <div className="form-section">
-            <div className="form-label">Will devices be standard provisioned or pre-provisioned?</div>
-            <div className="option-grid option-grid--wide">
-              {PROVISIONING_PREFERENCES.map(p => (
-                <OptionButton
-                  key={p.value}
-                  label={p.label}
-                  sublabel={p.sublabel}
-                  selected={readiness.provisioningPreference === p.value}
-                  onClick={() => { onUpdate({ provisioningPreference: p.value }); onClearUnvalidated('readinessCheck.provisioningPreference'); }}
-                />
-              ))}
-            </div>
-            {uv('readinessCheck.provisioningPreference') && <div className="unvalidated-flag">⚠ Unvalidated — confirm with IT team</div>}
-          </div>
         </>
       )}
 

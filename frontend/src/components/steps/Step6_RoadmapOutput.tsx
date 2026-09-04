@@ -78,10 +78,9 @@ const FIELD_LABELS: Record<string, string> = {
   'readinessCheck.deviceGroupsConfigured': 'Device groups and dynamic assignments configured',
   'readinessCheck.groupTagsRequired': 'Group Tags required for deployment',
   'readinessCheck.espConfigured': 'Enrollment Status Page (ESP) configured',
-  'readinessCheck.enrollmentRestrictionsExist': 'Enrollment restrictions / Conditional Access impact',
-  'readinessCheck.provisioningPreference': 'Standard vs. pre-provisioned preference',
-  'deploymentRecommendation.appsWithLengthyInstall': 'Applications with lengthy install times',
-  'deploymentRecommendation.appsDependOnUserCreds': 'Applications dependent on user credentials',
+  'readinessCheck.enrollmentRestrictionsVerifiedClean': 'Enrollment restrictions / Conditional Access impact',
+  'deploymentRecommendation.appsInstallTimesAcceptable': 'Applications with lengthy install times',
+  'deploymentRecommendation.appsNoCredentialDependency': 'Applications dependent on user credentials',
   'deploymentRecommendation.windowsUpdatesRequiredPreProvisioning': 'Windows updates required during pre-provisioning',
   'deploymentRecommendation.vpnSecurityAgentsRequired': 'VPN/security agents/EDR required before shipment',
   'deploymentRecommendation.hardwareModelsValidated': 'Hardware models validated against Intune config',
@@ -90,7 +89,7 @@ const FIELD_LABELS: Record<string, string> = {
   'engagementTriggers.cloudServicesEngaged': 'Cloud Services licensing review',
   'engagementTriggers.deviceImportMethod': 'Device import method into Autopilot',
   'engagementTriggers.enrollmentHandledBy': 'Enrollment handled by OEM or Zones',
-  'engagementTriggers.shipToLocation': 'Ship-to location',
+  'engagementTriggers.shipToLocation': 'Ship-to location(s)',
   'engagementTriggers.directToUserShipmentRequired': 'Direct-to-user shipment required',
   'engagementTriggers.adultSignatureRequired': 'Adult signature required',
   'engagementTriggers.assetTagsBiosCustomPackaging': 'Asset tags / BIOS / custom packaging required',
@@ -269,7 +268,7 @@ export function Step6_RoadmapOutput({ state, onUpdateRoadmap, onReset, onEditSte
               {
                 label: 'Join Type',
                 value: customerProfile.entraJoinType
-                ? ({ 'azure-ad-join': 'Entra ID Join', 'hybrid-aadj': 'Hybrid Entra ID Join (HEAJ)', 'ad-ds-only': 'AD DS Only' } as Record<string, string>)[customerProfile.entraJoinType] ?? '—'
+                ? ({ 'azure-ad-join': 'Entra ID Join', 'hybrid-aadj': 'Hybrid Entra ID Join (HEID)', 'ad-ds-only': 'AD DS Only' } as Record<string, string>)[customerProfile.entraJoinType] ?? '—'
                 : '—',
               },
               {

@@ -19,14 +19,13 @@ export type DeviceVolume = '1-50' | '51-250' | '251-1000' | '1000+';
 export type DeploymentTimeline = 'immediate' | '1-3months' | '3-6months' | '6months+';
 export type PrimaryOs = 'windows' | 'mac' | 'ios' | 'android' | 'linux';
 export type ImageType = 'clean-image' | 'oem-ready';
-export type ProvisioningModel = 'pre-provisioning' | 'user-driven' | 'hybrid';
+export type ProvisioningModel = 'pre-provisioning' | 'user-driven';
 export type Owner = 'SA' | 'TSC' | 'Cloud Services' | 'Customer' | 'Account Team';
 export type IntuneAutopilotOwner = 'internal-team' | 'partner' | 'both' | 'not-assigned';
 export type DeploymentModelType = 'pilot' | 'refresh' | 'new-hire' | 'ongoing';
-export type ProvisioningPreference = 'standard' | 'pre-provisioned';
 export type DeviceImportMethod = 'oem-direct' | 'reseller-csv' | 'partner-center' | 'manual-other';
 export type EnrollmentHandledBy = 'oem' | 'zones';
-export type ShipToLocation = 'home' | 'office' | 'distribution-center';
+export type ShipToLocation = 'home' | 'office' | 'distribution-center' | 'zones-tsc-hold' | 'international';
 
 export interface CustomerProfile {
   customerName: string;
@@ -79,9 +78,10 @@ export interface ReadinessCheck {
   deviceGroupsConfigured: boolean | null;
   groupTagsRequired: boolean | null;
   espConfigured: boolean | null;
-  enrollmentRestrictionsExist: boolean | null;
+  // true = SA verified no enrollment restrictions or Conditional Access policies impact provisioning (clean/pass).
+  // false = restrictions exist (triggers enrollmentRestrictionsDetail).
+  enrollmentRestrictionsVerifiedClean: boolean | null;
   enrollmentRestrictionsDetail: string;
-  provisioningPreference: ProvisioningPreference | null;
 
   autopilotProfileType: AutopilotProfileType | null;
   routedToProServices: boolean;
@@ -95,9 +95,14 @@ export interface DeploymentRecommendation {
 
   // Category 3 - Application Readiness (pre-provisioning / install-time half)
   preProvisioningSoftwareList: string;
-  appsWithLengthyInstall: boolean | null;
+  // true = SA verified all application install times are acceptable (clean/pass).
+  // false = one or more applications have lengthy install times (triggers appsWithLengthyInstallDetail).
+  appsInstallTimesAcceptable: boolean | null;
   appsWithLengthyInstallDetail: string;
-  appsDependOnUserCreds: boolean | null;
+  // true = SA verified no applications require user credentials before installation (clean/pass).
+  // false = one or more applications are credential-dependent (triggers appsDependOnUserCredsDetail).
+  appsNoCredentialDependency: boolean | null;
+  appsDependOnUserCredsDetail: string;
 
   // Category 4 - Device Configuration Requirements
   devicePoliciesRequired: string;
@@ -116,10 +121,9 @@ export interface EngagementTriggers {
   deviceImportMethod: DeviceImportMethod | null;
   enrollmentHandledBy: EnrollmentHandledBy | null;
   deviceAssociatedInfo: string;
-  autopilotRegistrationValidator: string;
 
   // Category 6 - Deployment Logistics
-  shipToLocation: ShipToLocation | null;
+  shipToLocation: ShipToLocation[];
   directToUserShipmentRequired: boolean | null;
   adultSignatureRequired: boolean | null;
   assetTagsBiosCustomPackaging: boolean | null;

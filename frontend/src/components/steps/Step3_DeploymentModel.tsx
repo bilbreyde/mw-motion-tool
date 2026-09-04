@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { ConversationalMessage } from '../ConversationalMessage';
 import { OptionButton } from '../OptionButton';
 import { YesNoField } from '../YesNoField';
@@ -43,11 +43,6 @@ export const PROVISIONING_OPTIONS: { value: ProvisioningModel; label: string; su
     label: 'User-Driven (Self-Service OOBE)',
     sublabel: 'End user authenticates and completes enrollment at first boot',
   },
-  {
-    value: 'hybrid',
-    label: 'Hybrid (Mixed Fleet)',
-    sublabel: 'Combination — pre-provisioning for some roles, user-driven for others',
-  },
 ];
 
 export function Step3_DeploymentModel({
@@ -59,14 +54,26 @@ export function Step3_DeploymentModel({
   const canProceed =
     recommendation.imageType !== null &&
     recommendation.provisioningModel !== null &&
-    (recommendation.appsWithLengthyInstall !== null || uv('deploymentRecommendation.appsWithLengthyInstall')) &&
-    (recommendation.appsDependOnUserCreds !== null || uv('deploymentRecommendation.appsDependOnUserCreds')) &&
+    (recommendation.appsInstallTimesAcceptable !== null || uv('deploymentRecommendation.appsInstallTimesAcceptable')) &&
+    (recommendation.appsNoCredentialDependency !== null || uv('deploymentRecommendation.appsNoCredentialDependency')) &&
     (recommendation.windowsUpdatesRequiredPreProvisioning !== null || uv('deploymentRecommendation.windowsUpdatesRequiredPreProvisioning')) &&
     (recommendation.hardwareModelsValidated !== null || uv('deploymentRecommendation.hardwareModelsValidated'));
+
+  // Deterministic pre-selection signal: Pre-Provisioning is the recommended provisioning model
+  // when Autopilot is configured/tested and applications are packaged/tested (readiness gates 2 & 5).
+  const deterministicRecommendedModel: ProvisioningModel | null =
+    readiness.autopilotConfiguredTested === true && readiness.applicationsPackagedTested === true
+      ? 'pre-provisioning'
+      : null;
+
+  const [aiRecommendedModel, setAiRecommendedModel] = useState<ProvisioningModel | null>(deterministicRecommendedModel);
 
   useEffect(() => {
     if (!recommendation.aiRationale && !recommendation.loading) {
       onUpdate({ loading: true });
+      if (deterministicRecommendedModel && recommendation.provisioningModel === null) {
+        onUpdate({ provisioningModel: deterministicRecommendedModel });
+      }
       callMotionAI({
         step: 3,
         action: 'recommend-deployment',
@@ -76,11 +83,12 @@ export function Step3_DeploymentModel({
         readinessCheck: readiness,
       })
         .then(res => {
+          setAiRecommendedModel(res.provisioningModel ?? deterministicRecommendedModel);
           onUpdate({
             loading: false,
             aiRationale: res.rationale ?? res.message ?? '',
             imageType: res.imageType ?? null,
-            provisioningModel: res.provisioningModel ?? null,
+            provisioningModel: res.provisioningModel ?? deterministicRecommendedModel ?? null,
           });
         })
         .catch(() => {
@@ -154,7 +162,7 @@ export function Step3_DeploymentModel({
         {readiness.autopilotProfileType === 'user-driven-haadj' && (
           <div className="alert-card alert-card--info">
             <div className="alert-body">
-              Hybrid Entra ID Join (HEAJ) profile detected. Pre-Provisioning (Technician Phase) requires domain
+              Hybrid Entra ID Join (HEID) profile detected. Pre-Provisioning (Technician Phase) requires domain
               controller line-of-sight during the technician phase. Confirm network connectivity
               at the Zones staging facility with TSC before selecting this model.
             </div>
@@ -162,13 +170,30 @@ export function Step3_DeploymentModel({
         )}
         <div className="option-grid option-grid--wide">
           {PROVISIONING_OPTIONS.map(o => (
-            <OptionButton
-              key={o.value}
-              label={o.label}
-              sublabel={o.sublabel}
-              selected={recommendation.provisioningModel === o.value}
-              onClick={() => onUpdate({ provisioningModel: o.value })}
-            />
+            <div key={o.value} style={{ position: 'relative' }}>
+              {o.value === 'pre-provisioning' && (
+                <span
+                  className="recommendation-badge badge--preferred"
+                  style={{ position: 'absolute', top: 8, right: 8, zIndex: 1 }}
+                >
+                  Preferred
+                </span>
+              )}
+              {aiRecommendedModel === o.value && (
+                <span
+                  className="recommendation-badge badge--ai"
+                  style={{ position: 'absolute', top: 8, left: 8, zIndex: 1 }}
+                >
+                  AI Recommended
+                </span>
+              )}
+              <OptionButton
+                label={o.label}
+                sublabel={o.sublabel}
+                selected={recommendation.provisioningModel === o.value}
+                onClick={() => onUpdate({ provisioningModel: o.value })}
+              />
+            </div>
           ))}
         </div>
       </div>
@@ -180,11 +205,7 @@ export function Step3_DeploymentModel({
             <h4 style={{ color: 'var(--color-text-primary)' }}>
               {recommendation.imageType === 'clean-image' ? 'Zones Clean Image' : 'OEM Ready Image'}
               {' + '}
-              {recommendation.provisioningModel === 'pre-provisioning'
-                ? 'Pre-Provisioning'
-                : recommendation.provisioningModel === 'user-driven'
-                ? 'User-Driven'
-                : 'Hybrid'}
+              {recommendation.provisioningModel === 'pre-provisioning' ? 'Pre-Provisioning' : 'User-Driven'}
             </h4>
           </div>
           <div className="alert-card alert-card--info" style={{ margin: 0 }}>
@@ -214,21 +235,22 @@ export function Step3_DeploymentModel({
       />
 
       <YesNoField
-        label="Are there any applications with lengthy installation times?"
-        value={recommendation.appsWithLengthyInstall}
-        fieldKey="deploymentRecommendation.appsWithLengthyInstall"
+        label="Verify there are no applications with lengthy installation times."
+        value={recommendation.appsInstallTimesAcceptable}
+        fieldKey="deploymentRecommendation.appsInstallTimesAcceptable"
         discoveryMode={discoveryMode}
         unvalidatedFields={unvalidatedFields}
-        onChange={v => onUpdate({ appsWithLengthyInstall: v })}
+        onChange={v => onUpdate({ appsInstallTimesAcceptable: v })}
         onMarkUnvalidated={onMarkUnvalidated}
         onClearUnvalidated={onClearUnvalidated}
-        yesLabel="Yes — lengthy install times exist"
-        noLabel="No — install times are acceptable"
+        yesLabel="Yes — all application install times are acceptable"
+        noLabel="No — one or more applications have lengthy install times"
+        tone="gate"
       />
 
-      {recommendation.appsWithLengthyInstall === true && (
+      {recommendation.appsInstallTimesAcceptable === false && (
         <TextField
-          label="Which applications have lengthy installation times?"
+          label="List the applications with lengthy install times"
           value={recommendation.appsWithLengthyInstallDetail}
           placeholder="e.g. AutoCAD (~25 min install), Adobe Creative Cloud suite"
           fieldKey="deploymentRecommendation.appsWithLengthyInstallDetail"
@@ -242,17 +264,33 @@ export function Step3_DeploymentModel({
       )}
 
       <YesNoField
-        label="Are any applications dependent on user credentials before installation?"
-        value={recommendation.appsDependOnUserCreds}
-        fieldKey="deploymentRecommendation.appsDependOnUserCreds"
+        label="Verify no applications require user credentials before installation."
+        value={recommendation.appsNoCredentialDependency}
+        fieldKey="deploymentRecommendation.appsNoCredentialDependency"
         discoveryMode={discoveryMode}
         unvalidatedFields={unvalidatedFields}
-        onChange={v => onUpdate({ appsDependOnUserCreds: v })}
+        onChange={v => onUpdate({ appsNoCredentialDependency: v })}
         onMarkUnvalidated={onMarkUnvalidated}
         onClearUnvalidated={onClearUnvalidated}
-        yesLabel="Yes — credential-dependent installs exist"
-        noLabel="No — no credential dependency"
+        yesLabel="Yes — no credential-dependent applications"
+        noLabel="No — one or more applications require user credentials"
+        tone="gate"
       />
+
+      {recommendation.appsNoCredentialDependency === false && (
+        <TextField
+          label="List the credential-dependent applications"
+          value={recommendation.appsDependOnUserCredsDetail}
+          placeholder="e.g. LOB ERP client requires interactive login before install completes"
+          fieldKey="deploymentRecommendation.appsDependOnUserCredsDetail"
+          discoveryMode={discoveryMode}
+          unvalidatedFields={unvalidatedFields}
+          onChange={v => onUpdate({ appsDependOnUserCredsDetail: v })}
+          onMarkUnvalidated={onMarkUnvalidated}
+          onClearUnvalidated={onClearUnvalidated}
+          multiline
+        />
+      )}
 
       {/* Category 4 - Device Configuration Requirements */}
       <h3 className="category-heading">Device Configuration Requirements</h3>

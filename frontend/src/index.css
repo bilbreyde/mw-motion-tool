@@ -1,3 +1,4 @@
+/* Theme: Dark (Classic) — default */
 :root {
   --color-bg-primary: #0F2044;
   --color-bg-secondary: #162952;
@@ -6,6 +7,7 @@
   --color-accent: #00C2FF;
   --color-accent-hover: #00A8DC;
   --color-accent-dim: rgba(0, 194, 255, 0.15);
+  --color-accent-glow: rgba(0, 194, 255, 0.3);
   --color-text-primary: #FFFFFF;
   --color-text-secondary: #A0B4CC;
   --color-text-muted: #6B8AAE;
@@ -26,6 +28,59 @@
   --font-sans: 'Segoe UI', system-ui, -apple-system, sans-serif;
   --font-mono: 'Cascadia Code', 'Fira Code', monospace;
   --transition: 150ms ease;
+}
+
+/* Theme: Light — clean white/light-gray professional theme */
+:root[data-theme="light"] {
+  --color-bg-primary: #F8F9FA;
+  --color-bg-secondary: #FFFFFF;
+  --color-bg-surface: #FFFFFF;
+  --color-bg-elevated: #F1F3F5;
+  --color-accent: #2E5FA3;
+  --color-accent-hover: #244B82;
+  --color-accent-dim: rgba(46, 95, 163, 0.12);
+  --color-accent-glow: rgba(46, 95, 163, 0.25);
+  --color-text-primary: #1A1A2E;
+  --color-text-secondary: #4A5568;
+  --color-text-muted: #7C8798;
+  --color-success: #15803D;
+  --color-success-dim: rgba(21, 128, 61, 0.12);
+  --color-warning: #B45309;
+  --color-warning-dim: rgba(180, 83, 9, 0.12);
+  --color-danger: #DC2626;
+  --color-danger-dim: rgba(220, 38, 38, 0.12);
+  --color-border: #E2E8F0;
+  --color-border-accent: rgba(46, 95, 163, 0.35);
+  --shadow-sm: 0 1px 3px rgba(16,24,40,0.08);
+  --shadow-md: 0 4px 16px rgba(16,24,40,0.10);
+  --shadow-lg: 0 8px 32px rgba(16,24,40,0.14);
+}
+
+/* Theme: High Contrast — black & white accessibility theme.
+   No color carries meaning; selection relies on bold text and border weight only. */
+:root[data-theme="high-contrast"] {
+  --color-bg-primary: #000000;
+  --color-bg-secondary: #000000;
+  --color-bg-surface: #111111;
+  --color-bg-elevated: #111111;
+  --color-accent: #FFFFFF;
+  --color-accent-hover: #FFFFFF;
+  --color-accent-dim: rgba(255, 255, 255, 0.15);
+  --color-accent-glow: rgba(255, 255, 255, 0.35);
+  --color-text-primary: #FFFFFF;
+  --color-text-secondary: #FFFFFF;
+  --color-text-muted: #CCCCCC;
+  --color-success: #FFFFFF;
+  --color-success-dim: rgba(255, 255, 255, 0.15);
+  --color-warning: #FFFFFF;
+  --color-warning-dim: rgba(255, 255, 255, 0.15);
+  --color-danger: #FFFFFF;
+  --color-danger-dim: rgba(255, 255, 255, 0.15);
+  --color-border: #FFFFFF;
+  --color-border-accent: #FFFFFF;
+  --shadow-sm: none;
+  --shadow-md: none;
+  --shadow-lg: none;
 }
 
 *, *::before, *::after {
@@ -68,6 +123,67 @@ p { color: var(--color-text-secondary); line-height: 1.7; }
   display: flex;
   height: 100vh;
   overflow: hidden;
+}
+
+/* Theme switcher — fixed top-right, visible on every screen */
+.theme-switcher {
+  position: fixed;
+  top: 16px;
+  right: 20px;
+  z-index: 60;
+  display: flex;
+  gap: 2px;
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 3px;
+  box-shadow: var(--shadow-sm);
+}
+
+.theme-switcher-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 10px;
+  background: transparent;
+  border: none;
+  border-radius: calc(var(--radius-md) - 3px);
+  color: var(--color-text-muted);
+  font-size: 0.72rem;
+  font-weight: 500;
+  font-family: var(--font-sans);
+  cursor: pointer;
+  transition: all var(--transition);
+  white-space: nowrap;
+}
+
+.theme-switcher-btn:hover {
+  color: var(--color-text-primary);
+  background: var(--color-accent-dim);
+}
+
+.theme-switcher-btn--active {
+  background: var(--color-accent);
+  color: var(--color-bg-primary);
+  font-weight: 700;
+}
+
+.theme-switcher-btn--active:hover {
+  background: var(--color-accent);
+  color: var(--color-bg-primary);
+}
+
+.theme-switcher-icon {
+  font-size: 0.9rem;
+  line-height: 1;
+}
+
+:root[data-theme="high-contrast"] .theme-switcher {
+  border-width: 2px;
+}
+
+:root[data-theme="high-contrast"] .theme-switcher-btn--active {
+  border: 1px solid #FFFFFF;
 }
 
 /* Sidebar */
@@ -226,12 +342,12 @@ p { color: var(--color-text-secondary); line-height: 1.7; }
   cursor: pointer;
   transition: all var(--transition);
   font-family: var(--font-sans);
-  box-shadow: 0 2px 10px rgba(0, 194, 255, 0.3);
+  box-shadow: 0 2px 10px var(--color-accent-glow);
 }
 
 .save-session-btn:hover:not(:disabled) {
   background: var(--color-accent-hover);
-  box-shadow: 0 4px 14px rgba(0, 194, 255, 0.45);
+  box-shadow: 0 4px 14px var(--color-accent-glow);
   transform: translateY(-1px);
 }
 
@@ -351,7 +467,7 @@ p { color: var(--color-text-secondary); line-height: 1.7; }
   font-size: 0.8rem;
   font-weight: 700;
   flex-shrink: 0;
-  box-shadow: 0 2px 8px rgba(0, 194, 255, 0.3);
+  box-shadow: 0 2px 8px var(--color-accent-glow);
 }
 
 .message-content {
@@ -488,6 +604,36 @@ p { color: var(--color-text-secondary); line-height: 1.7; }
   color: var(--color-text-secondary);
 }
 
+/* Accessibility: selection must be distinguishable without relying on color alone. */
+.option-btn--selected .option-label {
+  font-weight: 700;
+}
+
+/* High Contrast theme: selected controls are a solid white fill with black text —
+   selection is conveyed by fill + bold text + border weight only, never by hue. */
+:root[data-theme="high-contrast"] .option-btn--selected,
+:root[data-theme="high-contrast"] .option-btn--yes.option-btn--selected,
+:root[data-theme="high-contrast"] .option-btn--no.option-btn--selected,
+:root[data-theme="high-contrast"] .option-btn--warn.option-btn--selected,
+:root[data-theme="high-contrast"] .option-btn--accent.option-btn--selected,
+:root[data-theme="high-contrast"] .option-btn--unvalidated.option-btn--selected {
+  background: #FFFFFF;
+  border-color: #FFFFFF;
+  border-width: 2px;
+  color: #000000;
+}
+
+:root[data-theme="high-contrast"] .option-btn--selected .option-label,
+:root[data-theme="high-contrast"] .option-btn--selected .option-sublabel {
+  color: #000000;
+}
+
+:root[data-theme="high-contrast"] .owner-chip {
+  background: transparent;
+  border: 1px solid #FFFFFF;
+  color: #FFFFFF;
+}
+
 /* Form sections */
 .form-section {
   margin-bottom: 28px;
@@ -549,7 +695,7 @@ textarea.text-input { resize: vertical; font-family: var(--font-sans); }
 
 .btn-primary:hover:not(:disabled) {
   background: var(--color-accent-hover);
-  box-shadow: 0 4px 16px rgba(0, 194, 255, 0.35);
+  box-shadow: 0 4px 16px var(--color-accent-glow);
   transform: translateY(-1px);
 }
 
@@ -783,10 +929,10 @@ textarea.text-input { resize: vertical; font-family: var(--font-sans); }
   white-space: nowrap;
 }
 
-.owner--seller { background: rgba(0, 194, 255, 0.15); color: var(--color-accent); }
+.owner--seller { background: var(--color-accent-dim); color: var(--color-accent); }
 .owner--dw-sa { background: rgba(138, 92, 246, 0.15); color: #A78BFA; }
-.owner--tsc { background: rgba(255, 176, 32, 0.15); color: var(--color-warning); }
-.owner--cloud { background: rgba(0, 212, 170, 0.15); color: var(--color-success); }
+.owner--tsc { background: var(--color-warning-dim); color: var(--color-warning); }
+.owner--cloud { background: var(--color-success-dim); color: var(--color-success); }
 .owner--customer { background: rgba(255,255,255,0.08); color: var(--color-text-secondary); }
 
 .status-dot {

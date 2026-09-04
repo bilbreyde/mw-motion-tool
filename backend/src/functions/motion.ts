@@ -28,13 +28,14 @@ CORE BUSINESS RULES — always enforce these:
 ZONES SERVICE PORTFOLIO:
 - TSC Provisioning: Zones' technical staging and configuration service. Required for all Clean Image and Autopilot Pre-Provisioning engagements.
 - Zones Clean Image: SA-specified, TSC-built Windows image. Includes Autopilot OOBE configuration, application baseline, policy application, and enrollment profile assignment.
-- Digital Workplace Pro Services: Readiness engagements — Autopilot configuration, Intune environment builds, co-management workload migration, Hybrid Entra ID Join (HEAJ) configuration.
+- Digital Workplace Pro Services: Readiness engagements — Autopilot configuration, Intune environment builds, co-management workload migration, Hybrid Entra ID Join (HEID) configuration.
 - Cloud Services: Microsoft licensing validation — Intune Plan 1 vs P2, Entra ID P1/P2, M365 SKU optimization.
 - MDM Managed Services: Post-deployment Intune management.
 
 TECHNICAL CONTEXT AWARENESS:
-- Hybrid Entra ID Join (HEAJ) deployments require domain controller connectivity during the Autopilot technician phase (Pre-Provisioning). Always flag DC line-of-sight requirements when Hybrid Entra ID Join is the join type.
-- Co-managed environments (SCCM + Intune): confirm compliance and device configuration workloads are shifted to Intune before recommending Autopilot as the provisioning path.
+- Hybrid Entra ID Join (HEID) deployments require domain controller connectivity during the Autopilot technician phase (Pre-Provisioning). Always flag DC line-of-sight requirements when Hybrid Entra ID Join is the join type.
+- Co-managed environments (MECM (SCCM) + Intune): confirm compliance and device configuration workloads are shifted to Intune before recommending Autopilot as the provisioning path.
+- Pre-Provisioning (Technician Phase) is the preferred provisioningModel recommendation when Autopilot is configured and tested, applications are packaged and tested, and the order is being placed through Zones.
 - Self-Deploying Autopilot profiles require TPM 2.0 and cannot be used with user-assigned profiles — confirm hardware compatibility.
 - User-Driven Hybrid Entra ID Join requires the Intune Connector for Active Directory and a service account with domain join permissions configured in the Zones staging environment.
 
@@ -101,7 +102,7 @@ Respond with JSON in this exact schema:
 {
   "message": "Technical recommendation summary for the SA — include specific rationale referencing entraJoinType, coManagementStatus, and autopilotProfileType",
   "imageType": "clean-image" | "oem-ready",
-  "provisioningModel": "pre-provisioning" | "user-driven" | "hybrid",
+  "provisioningModel": "pre-provisioning" | "user-driven",
   "rationale": "Detailed technical rationale. Reference specific Autopilot profile types, join type implications, co-management workload requirements, and any DC connectivity or hardware prerequisites."
 }`;
   }

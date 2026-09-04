@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Sidebar } from './components/Sidebar';
 import { SessionSavedModal } from './components/SessionSavedModal';
+import { ThemeSwitcher } from './components/ThemeSwitcher';
 import { DiscoveryModeSelector } from './components/DiscoveryModeSelector';
 import { Step1_CustomerProfile } from './components/steps/Step1_CustomerProfile';
 import { Step2_ReadinessGate } from './components/steps/Step2_ReadinessGate';
@@ -10,6 +11,7 @@ import { Step5_FirstArticle } from './components/steps/Step5_FirstArticle';
 import { Step6_RoadmapOutput } from './components/steps/Step6_RoadmapOutput';
 import { ProServicesRoute } from './components/ProServicesRoute';
 import { useMotionState } from './hooks/useMotionState';
+import { useTheme } from './hooks/useTheme';
 import { isFieldAnswered } from './types';
 import type { ReadinessCheck } from './types';
 import { saveSession, loadSession } from './utils/sessionApi';
@@ -48,6 +50,8 @@ export default function App() {
 
   const uv = unvalidatedFields;
   const answered = (val: unknown, key: string) => isFieldAnswered(val, key, uv);
+
+  const { theme, setTheme } = useTheme();
 
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -119,8 +123,8 @@ export default function App() {
     if (
       deploymentRecommendation.imageType &&
       deploymentRecommendation.provisioningModel &&
-      answered(deploymentRecommendation.appsWithLengthyInstall, 'deploymentRecommendation.appsWithLengthyInstall') &&
-      answered(deploymentRecommendation.appsDependOnUserCreds, 'deploymentRecommendation.appsDependOnUserCreds') &&
+      answered(deploymentRecommendation.appsInstallTimesAcceptable, 'deploymentRecommendation.appsInstallTimesAcceptable') &&
+      answered(deploymentRecommendation.appsNoCredentialDependency, 'deploymentRecommendation.appsNoCredentialDependency') &&
       answered(deploymentRecommendation.windowsUpdatesRequiredPreProvisioning, 'deploymentRecommendation.windowsUpdatesRequiredPreProvisioning') &&
       answered(deploymentRecommendation.hardwareModelsValidated, 'deploymentRecommendation.hardwareModelsValidated')
     ) completed.add(3);
@@ -159,17 +163,21 @@ export default function App() {
 
   if (!discoveryMode) {
     return (
-      <DiscoveryModeSelector
-        onSelect={setDiscoveryMode}
-        onResumeSession={handleResumeSession}
-        resuming={resuming}
-        resumeError={resumeError}
-      />
+      <>
+        <ThemeSwitcher theme={theme} onChange={setTheme} />
+        <DiscoveryModeSelector
+          onSelect={setDiscoveryMode}
+          onResumeSession={handleResumeSession}
+          resuming={resuming}
+          resumeError={resumeError}
+        />
+      </>
     );
   }
 
   return (
     <div className="app-shell">
+      <ThemeSwitcher theme={theme} onChange={setTheme} />
       <Sidebar
         currentStep={currentStep}
         completedSteps={completedSteps}

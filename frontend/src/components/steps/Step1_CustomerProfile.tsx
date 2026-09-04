@@ -42,14 +42,14 @@ export const OS_OPTIONS: { value: PrimaryOs; label: string; sublabel: string }[]
 
 export const ENTRA_JOIN_TYPES: { value: EntraJoinType; label: string; sublabel: string }[] = [
   { value: 'azure-ad-join', label: 'Entra ID Join', sublabel: 'Cloud-only — Entra ID native, no on-prem AD dependency' },
-  { value: 'hybrid-aadj', label: 'Hybrid Entra ID Join (HEAJ)', sublabel: 'Devices joined to on-prem AD and registered in Entra ID' },
+  { value: 'hybrid-aadj', label: 'Hybrid Entra ID Join (HEID)', sublabel: 'Devices joined to on-prem AD and registered in Entra ID' },
   { value: 'ad-ds-only', label: 'AD DS Only', sublabel: 'Traditional on-prem domain join — no Entra ID' },
 ];
 
 export const CO_MGMT_OPTIONS: { value: CoManagementStatus; label: string; sublabel: string }[] = [
-  { value: 'intune-only', label: 'Intune Standalone', sublabel: 'Intune is the sole MDM — no SCCM/ConfigMgr in use' },
-  { value: 'co-managed', label: 'Co-management Active', sublabel: 'SCCM + Intune workload split — co-management enabled' },
-  { value: 'configmgr-only', label: 'SCCM / ConfigMgr Only', sublabel: 'No Intune — managed exclusively via ConfigMgr' },
+  { value: 'intune-only', label: 'Intune Standalone', sublabel: 'Intune is the sole MDM — no MECM (SCCM)/ConfigMgr in use' },
+  { value: 'co-managed', label: 'Co-management Active', sublabel: 'MECM (SCCM) + Intune workload split — co-management enabled' },
+  { value: 'configmgr-only', label: 'MECM (SCCM) / ConfigMgr Only', sublabel: 'No Intune — managed exclusively via ConfigMgr' },
   { value: 'none', label: 'No Management Platform', sublabel: 'Devices are unmanaged or in early evaluation' },
 ];
 
@@ -246,7 +246,7 @@ export function Step1_CustomerProfile({ profile, discoveryMode, unvalidatedField
             <p>
               What is the device join type for the target device population? Confirm this with the
               identity team — check Entra ID portal &gt; Devices &gt; All devices and verify the join
-              type column. Hybrid Entra ID Join (HEAJ) requires line-of-sight to a domain controller during OOBE.
+              type column. Hybrid Entra ID Join (HEID) requires line-of-sight to a domain controller during OOBE.
             </p>
           </ConversationalMessage>
         )}
@@ -278,10 +278,10 @@ export function Step1_CustomerProfile({ profile, discoveryMode, unvalidatedField
         {discoveryMode === 'live' && (
           <ConversationalMessage>
             <p>
-              Is SCCM / Microsoft Configuration Manager in use? If co-management is enabled,
+              Is MECM (SCCM) / Microsoft Configuration Manager in use? If co-management is enabled,
               confirm which workloads have been shifted to Intune (Device Configuration,
               Compliance Policies, Endpoint Protection). This affects whether Autopilot can
-              take full ownership of the device without SCCM dependency.
+              take full ownership of the device without MECM (SCCM) dependency.
             </p>
           </ConversationalMessage>
         )}
@@ -517,7 +517,7 @@ export function Step1_CustomerProfile({ profile, discoveryMode, unvalidatedField
       />
 
       <TextField
-        label="What deployment time is acceptable to the business?"
+        label="What provisioning time is acceptable to the business?"
         value={profile.acceptableDeploymentTime}
         placeholder="e.g. Device must be ready within 2 business days of order"
         fieldKey="customerProfile.acceptableDeploymentTime"
@@ -623,7 +623,7 @@ export function Step1_CustomerProfile({ profile, discoveryMode, unvalidatedField
       <TextField
         label="What constitutes success for the pilot?"
         value={profile.pilotSuccessCriteria}
-        placeholder="e.g. Zero help desk tickets on first boot, devices imaged within SLA"
+        placeholder="e.g. Zero help desk tickets on first boot, devices provisioned within end-user expectations"
         fieldKey="customerProfile.pilotSuccessCriteria"
         discoveryMode={discoveryMode}
         unvalidatedFields={unvalidatedFields}
