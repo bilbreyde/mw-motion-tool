@@ -4,6 +4,7 @@ import { YesNoField } from '../YesNoField';
 import { TextField } from '../TextField';
 import { UnvalidatedBtn } from '../UnvalidatedBtn';
 import type { CustomerProfile, EngagementTriggers, DiscoveryMode, DeviceImportMethod, EnrollmentHandledBy, ShipToLocation } from '../../types';
+import { boldCurrently } from '../../utils/boldCurrently';
 
 interface Props {
   profile: CustomerProfile;
@@ -167,7 +168,7 @@ export function Step4_EngagementTriggers({
       <h3 className="category-heading">Ordering & Enrollment Process</h3>
 
       <div className="form-section">
-        <div className="form-label">How are devices currently imported into Autopilot?</div>
+        <div className="form-label">{boldCurrently('How are devices currently imported into Autopilot?')}</div>
         <div className="option-grid option-grid--wide">
           {DEVICE_IMPORT_METHODS.map(m => (
             <OptionButton

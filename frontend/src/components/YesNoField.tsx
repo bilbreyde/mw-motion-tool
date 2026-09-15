@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import { ConversationalMessage } from './ConversationalMessage';
 import { OptionButton } from './OptionButton';
 import type { DiscoveryMode } from '../types';
+import { boldCurrently } from '../utils/boldCurrently';
 
 interface Props {
   label: string;
@@ -23,12 +24,6 @@ interface Props {
   // 'gate' — Step 2 readiness gate go/no-go: Yes = green (pass), No = red (blocking).
   // 'warn' — No triggers a routing change or blocking warning, but is not a hard stop: No = amber.
   tone?: 'neutral' | 'gate' | 'warn';
-}
-
-function renderLabel(label: string): ReactNode {
-  const parts = label.split(/(currently)/i);
-  if (parts.length === 1) return label;
-  return parts.map((part, i) => (/^currently$/i.test(part) ? <strong key={i}>{part}</strong> : part));
 }
 
 export function YesNoField({
@@ -58,7 +53,7 @@ export function YesNoField({
 
   return (
     <div className="form-section">
-      <div className="form-label">{renderLabel(label)}</div>
+      <div className="form-label">{boldCurrently(label)}</div>
       {copy && <ConversationalMessage><p>{copy}</p></ConversationalMessage>}
       <div className="option-grid">
         <OptionButton
