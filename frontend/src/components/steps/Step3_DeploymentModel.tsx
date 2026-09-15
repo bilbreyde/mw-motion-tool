@@ -60,7 +60,7 @@ export function Step3_DeploymentModel({
     (recommendation.hardwareModelsValidated !== null || uv('deploymentRecommendation.hardwareModelsValidated'));
 
   // Deterministic pre-selection signal: Pre-Provisioning is the recommended provisioning model
-  // when Autopilot is configured/tested and applications are packaged/tested (readiness gates 2 & 5).
+  // when Autopilot is configured/tested and applications are packaged/tested (readiness gates 6 & 9).
   const deterministicRecommendedModel: ProvisioningModel | null =
     readiness.autopilotConfiguredTested === true && readiness.applicationsPackagedTested === true
       ? 'pre-provisioning'
@@ -235,7 +235,7 @@ export function Step3_DeploymentModel({
       />
 
       <YesNoField
-        label="Verify there are no applications with lengthy installation times."
+        label="Verify there are no applications with lengthy installation times (Pre-Provisioning is capped at 45 minutes)."
         value={recommendation.appsInstallTimesAcceptable}
         fieldKey="deploymentRecommendation.appsInstallTimesAcceptable"
         discoveryMode={discoveryMode}

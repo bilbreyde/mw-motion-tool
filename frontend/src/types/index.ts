@@ -40,11 +40,7 @@ export interface CustomerProfile {
   deviceVolume: DeviceVolume | null;
   deploymentTimeline: DeploymentTimeline | null;
 
-  // Category 1 - Current Environment Readiness
-  intuneDeployedProduction: boolean | null;
-  autopilotConfiguredTestedProd: boolean | null;
-  autopilotDeployedBefore: boolean | null;
-  autopilotProcessDocumented: boolean | null;
+  // Category 1 - Intune/Autopilot Ownership
   intuneAutopilotOwner: IntuneAutopilotOwner | null;
 
   // Category 7 - User Experience Expectations
@@ -63,8 +59,12 @@ export interface CustomerProfile {
 }
 
 export interface ReadinessCheck {
-  // Step 2 Readiness Gate — the 7 official go/no-go questions. ALL must be Yes to proceed;
+  // Step 2 Readiness Gate — the 11 official go/no-go questions. ALL must be Yes to proceed;
   // any explicit No stops the engagement and routes to Autopilot/Intune Pro Services, no exceptions.
+  intuneDeployedProduction: boolean | null;
+  autopilotConfiguredTestedProd: boolean | null;
+  autopilotDeployedBefore: boolean | null;
+  autopilotProcessDocumented: boolean | null;
   intuneProductionReady: boolean | null;
   autopilotConfiguredTested: boolean | null;
   enrollmentProfilesDefined: boolean | null;
@@ -124,7 +124,6 @@ export interface EngagementTriggers {
 
   // Category 6 - Deployment Logistics
   shipToLocation: ShipToLocation[];
-  directToUserShipmentRequired: boolean | null;
   adultSignatureRequired: boolean | null;
   assetTagsBiosCustomPackaging: boolean | null;
   assetTagsBiosCustomPackagingDetail: string;

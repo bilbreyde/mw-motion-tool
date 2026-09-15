@@ -31,7 +31,7 @@ export const ENROLLMENT_HANDLERS: { value: EnrollmentHandledBy; label: string; s
 export const SHIP_TO_LOCATIONS: { value: ShipToLocation; label: string; sublabel: string }[] = [
   { value: 'home', label: 'End-User Home Addresses', sublabel: 'Direct-to-home shipment' },
   { value: 'office', label: 'Customer Office / Headquarters', sublabel: 'Shipped to a customer site' },
-  { value: 'distribution-center', label: 'Regional Distribution Center', sublabel: 'Staged at a DC before final delivery' },
+  { value: 'distribution-center', label: 'Customer Regional Distribution Center', sublabel: 'Held/Staged at a customer DC before final delivery.' },
   { value: 'zones-tsc-hold', label: 'Zones TSC (Pre-Provisioning Hold)', sublabel: 'Held at Zones TSC for technician-phase configuration' },
   { value: 'international', label: 'International Destination', sublabel: 'Ships outside the domestic region' },
 ];
@@ -49,8 +49,8 @@ export function Step4_EngagementTriggers({
     (triggers.deviceImportMethod !== null || uv('engagementTriggers.deviceImportMethod')) &&
     (triggers.enrollmentHandledBy !== null || uv('engagementTriggers.enrollmentHandledBy')) &&
     (triggers.shipToLocation.length > 0 || uv('engagementTriggers.shipToLocation')) &&
-    (triggers.directToUserShipmentRequired !== null || uv('engagementTriggers.directToUserShipmentRequired')) &&
-    (triggers.adultSignatureRequired !== null || uv('engagementTriggers.adultSignatureRequired')) &&
+    (!triggers.shipToLocation.includes('home') ||
+      triggers.adultSignatureRequired !== null || uv('engagementTriggers.adultSignatureRequired')) &&
     (triggers.assetTagsBiosCustomPackaging !== null || uv('engagementTriggers.assetTagsBiosCustomPackaging')) &&
     (triggers.regionalInternationalRequirements !== null || uv('engagementTriggers.regionalInternationalRequirements'));
 
@@ -289,31 +289,20 @@ export function Step4_EngagementTriggers({
         {uv('engagementTriggers.shipToLocation') && <div className="unvalidated-flag">⚠ Unvalidated — confirm with account team</div>}
       </div>
 
-      <YesNoField
-        label="Is direct-to-user shipment required?"
-        value={triggers.directToUserShipmentRequired}
-        fieldKey="engagementTriggers.directToUserShipmentRequired"
-        discoveryMode={discoveryMode}
-        unvalidatedFields={unvalidatedFields}
-        onChange={v => onUpdate({ directToUserShipmentRequired: v })}
-        onMarkUnvalidated={onMarkUnvalidated}
-        onClearUnvalidated={onClearUnvalidated}
-        yesLabel="Yes — direct-to-user required"
-        noLabel="No — not required"
-      />
-
-      <YesNoField
-        label="Is an adult signature required?"
-        value={triggers.adultSignatureRequired}
-        fieldKey="engagementTriggers.adultSignatureRequired"
-        discoveryMode={discoveryMode}
-        unvalidatedFields={unvalidatedFields}
-        onChange={v => onUpdate({ adultSignatureRequired: v })}
-        onMarkUnvalidated={onMarkUnvalidated}
-        onClearUnvalidated={onClearUnvalidated}
-        yesLabel="Yes — adult signature required"
-        noLabel="No — not required"
-      />
+      {triggers.shipToLocation.includes('home') && (
+        <YesNoField
+          label="Is an adult signature required?"
+          value={triggers.adultSignatureRequired}
+          fieldKey="engagementTriggers.adultSignatureRequired"
+          discoveryMode={discoveryMode}
+          unvalidatedFields={unvalidatedFields}
+          onChange={v => onUpdate({ adultSignatureRequired: v })}
+          onMarkUnvalidated={onMarkUnvalidated}
+          onClearUnvalidated={onClearUnvalidated}
+          yesLabel="Yes — adult signature required"
+          noLabel="No — not required"
+        />
+      )}
 
       <YesNoField
         label="Are asset tags, BIOS settings, or custom packaging required?"

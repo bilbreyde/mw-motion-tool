@@ -25,6 +25,12 @@ interface Props {
   tone?: 'neutral' | 'gate' | 'warn';
 }
 
+function renderLabel(label: string): ReactNode {
+  const parts = label.split(/(currently)/i);
+  if (parts.length === 1) return label;
+  return parts.map((part, i) => (/^currently$/i.test(part) ? <strong key={i}>{part}</strong> : part));
+}
+
 export function YesNoField({
   label, liveCopy, validationCopy, value, fieldKey, discoveryMode, unvalidatedFields,
   onChange, onMarkUnvalidated, onClearUnvalidated,
@@ -52,7 +58,7 @@ export function YesNoField({
 
   return (
     <div className="form-section">
-      <div className="form-label">{label}</div>
+      <div className="form-label">{renderLabel(label)}</div>
       {copy && <ConversationalMessage><p>{copy}</p></ConversationalMessage>}
       <div className="option-grid">
         <OptionButton

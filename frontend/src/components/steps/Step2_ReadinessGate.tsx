@@ -26,6 +26,7 @@ export const AUTOPILOT_PROFILES: { value: AutopilotProfileType; label: string; s
 
 interface GateQuestion {
   key: keyof ReadinessCheck & (
+    'intuneDeployedProduction' | 'autopilotConfiguredTestedProd' | 'autopilotDeployedBefore' | 'autopilotProcessDocumented' |
     'intuneProductionReady' | 'autopilotConfiguredTested' | 'enrollmentProfilesDefined' |
     'groupTagsDefined' | 'applicationsPackagedTested' | 'firstArticlePlanned' | 'ownershipAssigned'
   );
@@ -38,8 +39,40 @@ interface GateQuestion {
 
 const GATE_QUESTIONS: GateQuestion[] = [
   {
+    key: 'intuneDeployedProduction',
+    label: '1. Is Microsoft Intune currently deployed and managing production devices?',
+    liveCopy: 'Verify in the Intune admin center that production devices are enrolled and actively managed — not just a pilot or evaluation tenant.',
+    validationCopy: 'Based on seller-provided notes: is Intune confirmed as currently deployed and managing production devices? If unclear, flag as unvalidated.',
+    yesLabel: 'Yes — Intune manages production devices',
+    noLabel: 'No — not deployed or not in production',
+  },
+  {
+    key: 'autopilotConfiguredTestedProd',
+    label: '2. Is Windows Autopilot configured and tested in production?',
+    liveCopy: 'Verify in Intune admin center → Devices → Windows → Windows enrollment that a Deployment Profile is assigned and has been used against production devices, not just a lab/test tenant.',
+    validationCopy: 'Based on seller-provided notes: is Autopilot confirmed as configured and tested in production? If unclear, flag as unvalidated.',
+    yesLabel: 'Yes — configured and tested',
+    noLabel: 'No — not yet configured or tested',
+  },
+  {
+    key: 'autopilotDeployedBefore',
+    label: '3. Have devices been successfully deployed using Autopilot before?',
+    liveCopy: 'Confirm with the IT team that at least one successful production Autopilot deployment has been completed — not just a lab test.',
+    validationCopy: 'Based on seller-provided notes: has a successful prior Autopilot deployment been confirmed? If unclear, flag as unvalidated.',
+    yesLabel: 'Yes — prior successful deployments',
+    noLabel: 'No — no prior Autopilot deployments',
+  },
+  {
+    key: 'autopilotProcessDocumented',
+    label: '4. Is the Autopilot deployment process documented and repeatable?',
+    liveCopy: 'Confirm a documented, repeatable Autopilot deployment runbook exists — not an ad hoc, one-off process.',
+    validationCopy: 'Based on seller-provided notes: is the Autopilot deployment process confirmed as documented and repeatable? If unclear, flag as unvalidated.',
+    yesLabel: 'Yes — documented and repeatable',
+    noLabel: 'No — ad hoc or undocumented',
+  },
+  {
     key: 'intuneProductionReady',
-    label: '1. Is Intune production-ready?',
+    label: '5. Is Intune production-ready?',
     liveCopy: 'Verify in Intune admin center → Devices → Compliance policies that policies are assigned and enforced, not just created. Co-managed environments: confirm the Compliance workload is set to Intune.',
     validationCopy: 'Based on seller-provided notes: is Intune confirmed production-ready? If unclear, flag as unvalidated.',
     yesLabel: 'Yes — Intune is production-ready',
@@ -47,7 +80,7 @@ const GATE_QUESTIONS: GateQuestion[] = [
   },
   {
     key: 'autopilotConfiguredTested',
-    label: '2. Is Autopilot configured and tested?',
+    label: '6. Is Autopilot configured and tested?',
     liveCopy: 'Verify in Intune admin center → Devices → Windows → Windows enrollment → Deployment Profiles. At least one profile must be assigned and devices must be actively enrolling — not just created or in pilot.',
     validationCopy: 'Based on seller-provided notes: is Autopilot confirmed as configured and tested? If unclear, flag as unvalidated.',
     yesLabel: 'Yes — configured and tested',
@@ -55,7 +88,7 @@ const GATE_QUESTIONS: GateQuestion[] = [
   },
   {
     key: 'enrollmentProfilesDefined',
-    label: '3. Are enrollment profiles defined?',
+    label: '7. Are enrollment profiles defined?',
     liveCopy: 'Confirm deployment profiles exist and are assigned to the correct dynamic device groups for the devices in scope.',
     validationCopy: 'Based on seller-provided notes: are enrollment profiles confirmed as defined? If unclear, flag as unvalidated.',
     yesLabel: 'Yes — enrollment profiles defined',
@@ -63,7 +96,7 @@ const GATE_QUESTIONS: GateQuestion[] = [
   },
   {
     key: 'groupTagsDefined',
-    label: '4. Are Group Tags defined?',
+    label: '8. Are Group Tags defined?',
     liveCopy: 'Confirm Group Tag values exist and are documented for dynamic group targeting and profile assignment.',
     validationCopy: 'Based on seller-provided notes: are Group Tags confirmed as defined? If unclear, flag as unvalidated.',
     yesLabel: 'Yes — Group Tags defined',
@@ -71,7 +104,7 @@ const GATE_QUESTIONS: GateQuestion[] = [
   },
   {
     key: 'applicationsPackagedTested',
-    label: '5. Are required applications packaged and tested?',
+    label: '9. Are required applications packaged and tested?',
     liveCopy: 'Confirm all required applications are packaged in Intune (Win32, MSIX, or store apps) and have been validated to install successfully during OOBE / ESP.',
     validationCopy: 'Based on seller-provided notes: are required applications confirmed as packaged and tested? If unclear, flag as unvalidated.',
     yesLabel: 'Yes — packaged and tested',
@@ -79,7 +112,7 @@ const GATE_QUESTIONS: GateQuestion[] = [
   },
   {
     key: 'firstArticlePlanned',
-    label: '6. Has a first-article deployment been planned?',
+    label: '10. Has a first-article deployment been planned?',
     liveCopy: 'Confirm a first-article test deployment has been scoped — including who validates it and what acceptance criteria will be used before scaling.',
     validationCopy: 'Based on seller-provided notes: has a first-article deployment been confirmed as planned? If unclear, flag as unvalidated.',
     yesLabel: 'Yes — first article planned',
@@ -87,7 +120,7 @@ const GATE_QUESTIONS: GateQuestion[] = [
   },
   {
     key: 'ownershipAssigned',
-    label: '7. Has ownership been assigned for ongoing Intune management?',
+    label: '11. Has ownership been assigned for ongoing Intune management?',
     liveCopy: 'Confirm a named owner (internal team or partner) is accountable for Intune/Autopilot administration after go-live.',
     validationCopy: 'Based on seller-provided notes: has ongoing ownership been confirmed as assigned? If unclear, flag as unvalidated.',
     yesLabel: 'Yes — ownership assigned',
@@ -119,14 +152,14 @@ export function Step2_ReadinessGate({
       <ConversationalMessage>
         {discoveryMode === 'live' ? (
           <p>
-            Confirm all seven readiness gates directly with the customer's IT team. Do not accept
+            Confirm all eleven readiness gates directly with the customer's IT team. Do not accept
             verbal confirmation alone — request evidence: exported Autopilot enrollment profiles,
             Intune device compliance reports, application packaging records, or enrollment profile
             screenshots. If they cannot produce evidence, the answer is No.
           </p>
         ) : (
           <p>
-            Validate all seven readiness gates from the materials provided by the account team.
+            Validate all eleven readiness gates from the materials provided by the account team.
             If any gate cannot be confirmed from the available information, flag it as Unvalidated.
             Do not proceed to ordering on unvalidated readiness.
           </p>
@@ -134,7 +167,7 @@ export function Step2_ReadinessGate({
       </ConversationalMessage>
 
       <div className="alert-card alert-card--info" style={{ marginBottom: 8 }}>
-        <div className="alert-title">Step 2 Readiness Gate — All Seven Must Be Yes</div>
+        <div className="alert-title">Step 2 Readiness Gate — All Eleven Must Be Yes</div>
         <div className="alert-body">
           These are the official Zones Digital Workplace qualification criteria for Autopilot
           pre-provisioning. If any answer is No, stop — do not scope provisioning services.
@@ -309,7 +342,7 @@ export function Step2_ReadinessGate({
         <div className="alert-card alert-card--success">
           <div className="alert-title">Readiness Gate — PASSED</div>
           <div className="alert-body">
-            All seven readiness gates confirmed. Proceeding to deployment model selection.
+            All eleven readiness gates confirmed. Proceeding to deployment model selection.
           </div>
         </div>
       )}

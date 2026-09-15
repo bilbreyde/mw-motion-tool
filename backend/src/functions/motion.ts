@@ -14,15 +14,19 @@ CORE BUSINESS RULES — always enforce these:
 2. Zones Clean Image is ALWAYS preferred over OEM Ready Image for build consistency, auditability, and Autopilot readiness.
 3. Windows Autopilot enrollment is REQUIRED for all modern provisioning workflows. If not in production, the engagement does not qualify for standard motion.
 4. First Article testing is REQUIRED before production-scale device orders. The SA owns the acceptance criteria definition — TSC executes against it.
-5. STEP 2 READINESS GATE — these are the official Zones Digital Workplace qualification criteria for Autopilot pre-provisioning. ALL SEVEN must be Yes to qualify for a standard provisioning motion:
-   (1) Is Intune production-ready?
-   (2) Is Autopilot configured and tested?
-   (3) Are enrollment profiles defined?
-   (4) Are Group Tags defined?
-   (5) Are required applications packaged and tested?
-   (6) Has a first-article deployment been planned?
-   (7) Has ownership been assigned for ongoing Intune management?
-   If ANY of the seven is No, the engagement must be routed to the Autopilot/Intune Professional Services readiness engagement. No exceptions — do not scope provisioning services until every gap is remediated.
+5. STEP 2 READINESS GATE — these are the official Zones Digital Workplace qualification criteria for Autopilot pre-provisioning. ALL ELEVEN must be Yes to qualify for a standard provisioning motion:
+   (1) Is Microsoft Intune currently deployed and managing production devices?
+   (2) Is Windows Autopilot configured and tested in production?
+   (3) Have devices been successfully deployed using Autopilot before?
+   (4) Is the Autopilot deployment process documented and repeatable?
+   (5) Is Intune production-ready?
+   (6) Is Autopilot configured and tested?
+   (7) Are enrollment profiles defined?
+   (8) Are Group Tags defined?
+   (9) Are required applications packaged and tested?
+   (10) Has a first-article deployment been planned?
+   (11) Has ownership been assigned for ongoing Intune management?
+   If ANY of the eleven is No, the engagement must be routed to the Autopilot/Intune Professional Services readiness engagement. No exceptions — do not scope provisioning services until every gap is remediated.
 6. The SA's role is to define the technical scope, validate the environment, and hand off to TSC for execution — not to manage deployment operations directly.
 
 ZONES SERVICE PORTFOLIO:
@@ -54,6 +58,10 @@ ROADMAP GENERATION RULES:
 - Return valid JSON matching the schema exactly`;
 
 const READINESS_GATE_LABELS: [string, string][] = [
+  ['intuneDeployedProduction', 'Is Microsoft Intune currently deployed and managing production devices?'],
+  ['autopilotConfiguredTestedProd', 'Is Windows Autopilot configured and tested in production?'],
+  ['autopilotDeployedBefore', 'Have devices been successfully deployed using Autopilot before?'],
+  ['autopilotProcessDocumented', 'Is the Autopilot deployment process documented and repeatable?'],
   ['intuneProductionReady', 'Is Intune production-ready?'],
   ['autopilotConfiguredTested', 'Is Autopilot configured and tested?'],
   ['enrollmentProfilesDefined', 'Are enrollment profiles defined?'],
@@ -91,7 +99,7 @@ Customer Technical Profile:
 ${profileSummary}
 ${modeNote}${uvFields}
 
-Readiness Status (Step 2 — 7-gate qualification):
+Readiness Status (Step 2 — 11-gate qualification):
 ${formatReadinessGates(readinessCheck as Record<string, unknown>)}
 - Autopilot Profile Type: ${(readinessCheck as Record<string, unknown>)?.autopilotProfileType ?? 'not specified'}
 
@@ -120,7 +128,7 @@ Deployment Model Selected:
 - Autopilot Profile: ${(readinessCheck as Record<string, unknown>)?.autopilotProfileType ?? 'not specified'}
 - Entra Join Type: ${(customerProfile as Record<string, unknown>)?.entraJoinType}
 
-Readiness Status (Step 2 — 7-gate qualification):
+Readiness Status (Step 2 — 11-gate qualification):
 ${formatReadinessGates(readinessCheck as Record<string, unknown>)}
 
 Engagement Status:
@@ -146,7 +154,7 @@ Customer Technical Profile:
 ${profileSummary}
 ${modeNote}${uvFields}
 
-Readiness Status (Step 2 — 7-gate qualification):
+Readiness Status (Step 2 — 11-gate qualification):
 ${formatReadinessGates(readinessCheck as Record<string, unknown>)}
 - Autopilot Profile Type: ${(readinessCheck as Record<string, unknown>)?.autopilotProfileType ?? 'not specified'}
 

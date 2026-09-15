@@ -17,6 +17,7 @@ import type { ReadinessCheck } from './types';
 import { saveSession, loadSession } from './utils/sessionApi';
 
 const READINESS_GATE_KEYS: (keyof ReadinessCheck)[] = [
+  'intuneDeployedProduction', 'autopilotConfiguredTestedProd', 'autopilotDeployedBefore', 'autopilotProcessDocumented',
   'intuneProductionReady', 'autopilotConfiguredTested', 'enrollmentProfilesDefined',
   'groupTagsDefined', 'applicationsPackagedTested', 'firstArticlePlanned', 'ownershipAssigned',
 ];
@@ -106,10 +107,6 @@ export default function App() {
       answered(customerProfile.mdmPlatform, 'customerProfile.mdmPlatform') &&
       answered(customerProfile.deviceVolume, 'customerProfile.deviceVolume') &&
       answered(customerProfile.deploymentTimeline, 'customerProfile.deploymentTimeline') &&
-      answered(customerProfile.intuneDeployedProduction, 'customerProfile.intuneDeployedProduction') &&
-      answered(customerProfile.autopilotConfiguredTestedProd, 'customerProfile.autopilotConfiguredTestedProd') &&
-      answered(customerProfile.autopilotDeployedBefore, 'customerProfile.autopilotDeployedBefore') &&
-      answered(customerProfile.autopilotProcessDocumented, 'customerProfile.autopilotProcessDocumented') &&
       answered(customerProfile.intuneAutopilotOwner, 'customerProfile.intuneAutopilotOwner') &&
       answered(customerProfile.immediateProductivityRequired, 'customerProfile.immediateProductivityRequired') &&
       answered(customerProfile.deploymentModelType, 'customerProfile.deploymentModelType') &&
@@ -136,8 +133,8 @@ export default function App() {
       answered(engagementTriggers.deviceImportMethod, 'engagementTriggers.deviceImportMethod') &&
       answered(engagementTriggers.enrollmentHandledBy, 'engagementTriggers.enrollmentHandledBy') &&
       answered(engagementTriggers.shipToLocation, 'engagementTriggers.shipToLocation') &&
-      answered(engagementTriggers.directToUserShipmentRequired, 'engagementTriggers.directToUserShipmentRequired') &&
-      answered(engagementTriggers.adultSignatureRequired, 'engagementTriggers.adultSignatureRequired') &&
+      (!engagementTriggers.shipToLocation.includes('home') ||
+        answered(engagementTriggers.adultSignatureRequired, 'engagementTriggers.adultSignatureRequired')) &&
       answered(engagementTriggers.assetTagsBiosCustomPackaging, 'engagementTriggers.assetTagsBiosCustomPackaging') &&
       answered(engagementTriggers.regionalInternationalRequirements, 'engagementTriggers.regionalInternationalRequirements')
     ) completed.add(4);

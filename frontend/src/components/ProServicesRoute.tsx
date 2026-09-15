@@ -7,6 +7,10 @@ interface Props {
 }
 
 const GATE_GAP_LABELS: Record<string, string> = {
+  intuneDeployedProduction: 'Intune — not currently deployed and managing production devices',
+  autopilotConfiguredTestedProd: 'Windows Autopilot — not configured and tested in production',
+  autopilotDeployedBefore: 'Autopilot — no prior successful deployments',
+  autopilotProcessDocumented: 'Autopilot deployment process — not documented and repeatable',
   intuneProductionReady: 'Intune — not confirmed production-ready',
   autopilotConfiguredTested: 'Windows Autopilot — not configured and tested',
   enrollmentProfilesDefined: 'Enrollment profiles — not defined',
@@ -66,7 +70,7 @@ export function ProServicesRoute({ profile, readiness, onReset }: Props) {
           <strong>Step 1:</strong> Document these technical gaps in the opportunity notes and notify the account team<br />
           <strong>Step 2:</strong> Recommend a Zones Pro Services readiness scoping call — include the gap details identified in this discovery<br />
           <strong>Step 3:</strong> Pro Services will assess the environment, build the readiness plan, and deliver the engagement<br />
-          <strong>Step 4:</strong> Once all seven readiness gates pass, re-run this Motion Tool to begin standard deployment scoping
+          <strong>Step 4:</strong> Once all eleven readiness gates pass, re-run this Motion Tool to begin standard deployment scoping
         </div>
       </div>
 

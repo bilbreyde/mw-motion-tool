@@ -56,7 +56,7 @@ export const CO_MGMT_OPTIONS: { value: CoManagementStatus; label: string; sublab
 export const MDM_PLATFORMS: { value: MdmPlatform; label: string }[] = [
   { value: 'intune', label: 'Microsoft Intune' },
   { value: 'jamf', label: 'Jamf Pro' },
-  { value: 'workspace-one', label: 'VMware Workspace ONE' },
+  { value: 'workspace-one', label: 'Omnissa (WS1)' },
   { value: 'none', label: 'No MDM' },
   { value: 'other', label: 'Other MDM' },
 ];
@@ -105,10 +105,6 @@ export function Step1_CustomerProfile({ profile, discoveryMode, unvalidatedField
     answered(profile.mdmPlatform, 'customerProfile.mdmPlatform') &&
     answered(profile.deviceVolume, 'customerProfile.deviceVolume') &&
     answered(profile.deploymentTimeline, 'customerProfile.deploymentTimeline') &&
-    answered(profile.intuneDeployedProduction, 'customerProfile.intuneDeployedProduction') &&
-    answered(profile.autopilotConfiguredTestedProd, 'customerProfile.autopilotConfiguredTestedProd') &&
-    answered(profile.autopilotDeployedBefore, 'customerProfile.autopilotDeployedBefore') &&
-    answered(profile.autopilotProcessDocumented, 'customerProfile.autopilotProcessDocumented') &&
     answered(profile.intuneAutopilotOwner, 'customerProfile.intuneAutopilotOwner') &&
     answered(profile.immediateProductivityRequired, 'customerProfile.immediateProductivityRequired') &&
     answered(profile.deploymentModelType, 'customerProfile.deploymentModelType') &&
@@ -394,60 +390,8 @@ export function Step1_CustomerProfile({ profile, discoveryMode, unvalidatedField
         {uv('customerProfile.deploymentTimeline') && <div className="unvalidated-flag">⚠ Unvalidated — confirm with IT team</div>}
       </div>
 
-      {/* Category 1 - Current Environment Readiness */}
-      <h3 className="category-heading">Current Environment Readiness</h3>
-
-      <YesNoField
-        label="Is Microsoft Intune currently deployed and managing production devices?"
-        value={profile.intuneDeployedProduction}
-        fieldKey="customerProfile.intuneDeployedProduction"
-        discoveryMode={discoveryMode}
-        unvalidatedFields={unvalidatedFields}
-        onChange={v => onUpdate({ intuneDeployedProduction: v })}
-        onMarkUnvalidated={onMarkUnvalidated}
-        onClearUnvalidated={onClearUnvalidated}
-        yesLabel="Yes — Intune manages production devices"
-        noLabel="No — Not deployed or not in production"
-      />
-
-      <YesNoField
-        label="Is Windows Autopilot configured and tested in production?"
-        value={profile.autopilotConfiguredTestedProd}
-        fieldKey="customerProfile.autopilotConfiguredTestedProd"
-        discoveryMode={discoveryMode}
-        unvalidatedFields={unvalidatedFields}
-        onChange={v => onUpdate({ autopilotConfiguredTestedProd: v })}
-        onMarkUnvalidated={onMarkUnvalidated}
-        onClearUnvalidated={onClearUnvalidated}
-        yesLabel="Yes — configured and tested"
-        noLabel="No — not yet configured or tested"
-      />
-
-      <YesNoField
-        label="Have you successfully deployed devices using Autopilot before?"
-        value={profile.autopilotDeployedBefore}
-        fieldKey="customerProfile.autopilotDeployedBefore"
-        discoveryMode={discoveryMode}
-        unvalidatedFields={unvalidatedFields}
-        onChange={v => onUpdate({ autopilotDeployedBefore: v })}
-        onMarkUnvalidated={onMarkUnvalidated}
-        onClearUnvalidated={onClearUnvalidated}
-        yesLabel="Yes — prior successful deployments"
-        noLabel="No — no prior Autopilot deployments"
-      />
-
-      <YesNoField
-        label="Is your Autopilot deployment process documented and repeatable?"
-        value={profile.autopilotProcessDocumented}
-        fieldKey="customerProfile.autopilotProcessDocumented"
-        discoveryMode={discoveryMode}
-        unvalidatedFields={unvalidatedFields}
-        onChange={v => onUpdate({ autopilotProcessDocumented: v })}
-        onMarkUnvalidated={onMarkUnvalidated}
-        onClearUnvalidated={onClearUnvalidated}
-        yesLabel="Yes — documented and repeatable"
-        noLabel="No — ad hoc or undocumented"
-      />
+      {/* Category 1 - Intune/Autopilot Ownership */}
+      <h3 className="category-heading">Intune/Autopilot Ownership</h3>
 
       <div className="form-section">
         <div className="form-label">Who owns and manages your Intune/Autopilot environment?</div>

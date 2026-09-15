@@ -75,13 +75,17 @@ export function ChecklistPrintView({ state }: Props) {
   const uv = (key: string) => unvalidatedFields.includes(key);
 
   const gateFields: [string, boolean | null, string][] = [
-    ['1. Is Intune production-ready?', r.intuneProductionReady, 'readinessCheck.intuneProductionReady'],
-    ['2. Is Autopilot configured and tested?', r.autopilotConfiguredTested, 'readinessCheck.autopilotConfiguredTested'],
-    ['3. Are enrollment profiles defined?', r.enrollmentProfilesDefined, 'readinessCheck.enrollmentProfilesDefined'],
-    ['4. Are Group Tags defined?', r.groupTagsDefined, 'readinessCheck.groupTagsDefined'],
-    ['5. Are required applications packaged and tested?', r.applicationsPackagedTested, 'readinessCheck.applicationsPackagedTested'],
-    ['6. Has a first-article deployment been planned?', r.firstArticlePlanned, 'readinessCheck.firstArticlePlanned'],
-    ['7. Has ownership been assigned for ongoing Intune management?', r.ownershipAssigned, 'readinessCheck.ownershipAssigned'],
+    ['1. Is Microsoft Intune currently deployed and managing production devices?', r.intuneDeployedProduction, 'readinessCheck.intuneDeployedProduction'],
+    ['2. Is Windows Autopilot configured and tested in production?', r.autopilotConfiguredTestedProd, 'readinessCheck.autopilotConfiguredTestedProd'],
+    ['3. Have devices been successfully deployed using Autopilot before?', r.autopilotDeployedBefore, 'readinessCheck.autopilotDeployedBefore'],
+    ['4. Is the Autopilot deployment process documented and repeatable?', r.autopilotProcessDocumented, 'readinessCheck.autopilotProcessDocumented'],
+    ['5. Is Intune production-ready?', r.intuneProductionReady, 'readinessCheck.intuneProductionReady'],
+    ['6. Is Autopilot configured and tested?', r.autopilotConfiguredTested, 'readinessCheck.autopilotConfiguredTested'],
+    ['7. Are enrollment profiles defined?', r.enrollmentProfilesDefined, 'readinessCheck.enrollmentProfilesDefined'],
+    ['8. Are Group Tags defined?', r.groupTagsDefined, 'readinessCheck.groupTagsDefined'],
+    ['9. Are required applications packaged and tested?', r.applicationsPackagedTested, 'readinessCheck.applicationsPackagedTested'],
+    ['10. Has a first-article deployment been planned?', r.firstArticlePlanned, 'readinessCheck.firstArticlePlanned'],
+    ['11. Has ownership been assigned for ongoing Intune management?', r.ownershipAssigned, 'readinessCheck.ownershipAssigned'],
   ];
   const gatesPassed = gateFields.every(([, v, k]) => v === true || uv(k));
 
@@ -146,10 +150,6 @@ export function ChecklistPrintView({ state }: Props) {
           <Row label="MDM Platform(s)" value={labelForMany(MDM_PLATFORMS, p.mdmPlatform)} flagged={uv('customerProfile.mdmPlatform')} />
           <Row label="Total Devices / Year (In Scope)" value={labelFor(DEVICE_VOLUMES, p.deviceVolume)} flagged={uv('customerProfile.deviceVolume')} />
           <Row label="Target Deployment Timeline" value={labelFor(TIMELINES, p.deploymentTimeline)} flagged={uv('customerProfile.deploymentTimeline')} />
-          <Row label="Intune deployed to production devices?" value={boolText(p.intuneDeployedProduction)} flagged={uv('customerProfile.intuneDeployedProduction')} />
-          <Row label="Autopilot configured and tested in production?" value={boolText(p.autopilotConfiguredTestedProd)} flagged={uv('customerProfile.autopilotConfiguredTestedProd')} />
-          <Row label="Prior successful Autopilot deployments?" value={boolText(p.autopilotDeployedBefore)} flagged={uv('customerProfile.autopilotDeployedBefore')} />
-          <Row label="Autopilot process documented and repeatable?" value={boolText(p.autopilotProcessDocumented)} flagged={uv('customerProfile.autopilotProcessDocumented')} />
           <Row label="Intune/Autopilot environment owner" value={labelFor(INTUNE_AUTOPILOT_OWNERS, p.intuneAutopilotOwner)} flagged={uv('customerProfile.intuneAutopilotOwner')} />
         </Section>
 
@@ -206,7 +206,6 @@ export function ChecklistPrintView({ state }: Props) {
 
         <Section title="Deployment Logistics">
           <Row label="Ship-to location(s)" value={labelForMany(SHIP_TO_LOCATIONS, e.shipToLocation)} flagged={uv('engagementTriggers.shipToLocation')} />
-          <Row label="Direct-to-user shipment required?" value={boolText(e.directToUserShipmentRequired)} flagged={uv('engagementTriggers.directToUserShipmentRequired')} />
           <Row label="Adult signature required?" value={boolText(e.adultSignatureRequired)} flagged={uv('engagementTriggers.adultSignatureRequired')} />
           <Row label="Asset tags / BIOS / custom packaging required?" value={boolText(e.assetTagsBiosCustomPackaging)} flagged={uv('engagementTriggers.assetTagsBiosCustomPackaging')} />
           {e.assetTagsBiosCustomPackaging === true && (
