@@ -33,3 +33,9 @@ Thumbs.db
 # Logs
 *.log
 npm-debug.log*
+
+# Local deploy artifacts (app-settings exports contain SAS tokens)
+settings.json
+backend/settings.json
+backend.zip
+*.bak

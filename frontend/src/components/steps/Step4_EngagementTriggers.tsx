@@ -52,8 +52,7 @@ export function Step4_EngagementTriggers({
     (triggers.shipToLocation.length > 0 || uv('engagementTriggers.shipToLocation')) &&
     (!triggers.shipToLocation.includes('home') ||
       triggers.adultSignatureRequired !== null || uv('engagementTriggers.adultSignatureRequired')) &&
-    (triggers.assetTagsBiosCustomPackaging !== null || uv('engagementTriggers.assetTagsBiosCustomPackaging')) &&
-    (triggers.regionalInternationalRequirements !== null || uv('engagementTriggers.regionalInternationalRequirements'));
+    (triggers.assetTagsBiosCustomPackaging !== null || uv('engagementTriggers.assetTagsBiosCustomPackaging'));
 
   const blockers: string[] = [];
   if (triggers.tscAlignmentScheduled === false && !uv('engagementTriggers.tscAlignmentScheduled'))
@@ -327,34 +326,6 @@ export function Step4_EngagementTriggers({
           discoveryMode={discoveryMode}
           unvalidatedFields={unvalidatedFields}
           onChange={v => onUpdate({ assetTagsBiosCustomPackagingDetail: v })}
-          onMarkUnvalidated={onMarkUnvalidated}
-          onClearUnvalidated={onClearUnvalidated}
-          multiline
-        />
-      )}
-
-      <YesNoField
-        label="Is this deployment domestic only, or are there regional or international requirements?"
-        value={triggers.regionalInternationalRequirements}
-        fieldKey="engagementTriggers.regionalInternationalRequirements"
-        discoveryMode={discoveryMode}
-        unvalidatedFields={unvalidatedFields}
-        onChange={v => onUpdate({ regionalInternationalRequirements: v })}
-        onMarkUnvalidated={onMarkUnvalidated}
-        onClearUnvalidated={onClearUnvalidated}
-        yesLabel="Regional / international requirements exist"
-        noLabel="Domestic only"
-      />
-
-      {triggers.regionalInternationalRequirements === true && (
-        <TextField
-          label="Describe the regional or international requirements"
-          value={triggers.regionalInternationalRequirementsDetail}
-          placeholder="e.g. Import duties, local keyboard layout, regional power adapters"
-          fieldKey="engagementTriggers.regionalInternationalRequirementsDetail"
-          discoveryMode={discoveryMode}
-          unvalidatedFields={unvalidatedFields}
-          onChange={v => onUpdate({ regionalInternationalRequirementsDetail: v })}
           onMarkUnvalidated={onMarkUnvalidated}
           onClearUnvalidated={onClearUnvalidated}
           multiline

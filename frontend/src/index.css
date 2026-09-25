@@ -1235,13 +1235,197 @@ textarea.text-input { resize: vertical; font-family: var(--font-sans); }
   white-space: nowrap;
 }
 
-/* Print styles */
+/* Printable document header (Session ID etc.) — used by the early exit summary and the roadmap */
+.print-header {
+  margin-bottom: 20px;
+  padding-bottom: 14px;
+  border-bottom: 2px solid var(--color-accent);
+}
+
+.print-only { display: none; }
+
+.print-header-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.print-header-brand {
+  font-size: 0.72rem;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--color-accent);
+  font-weight: 700;
+}
+
+.print-header-title {
+  font-size: 1.4rem;
+  margin: 2px 0 0;
+  color: var(--color-text-primary);
+}
+
+.print-header-session {
+  text-align: right;
+  border: 1px solid var(--color-border-accent);
+  border-radius: var(--radius-sm);
+  padding: 6px 12px;
+  white-space: nowrap;
+}
+
+.print-header-session-label {
+  display: block;
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--color-text-muted);
+  font-weight: 600;
+}
+
+.print-header-session-value {
+  font-family: var(--font-mono);
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+
+.print-header-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 20px;
+  margin-top: 10px;
+  font-size: 0.82rem;
+  color: var(--color-text-secondary);
+}
+
+/* Early exit summary (Step 2 failed gate) */
+.summary-section { margin-top: 24px; }
+
+.summary-section-title {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--color-accent);
+  margin-bottom: 8px;
+  break-after: avoid;
+}
+
+.summary-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-border);
+  font-size: 0.85rem;
+}
+
+.summary-table td {
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--color-border);
+  vertical-align: top;
+}
+
+.summary-table tr:last-child td { border-bottom: none; }
+.summary-table tr { break-inside: avoid; }
+
+.summary-q { width: 55%; color: var(--color-text-secondary); }
+.summary-a { text-align: right; font-weight: 600; color: var(--color-text-primary); }
+.summary-a--pass { color: var(--color-success); }
+.summary-a--fail { color: var(--color-danger); font-weight: 700; }
+.summary-a--unset { color: var(--color-text-muted); font-style: italic; font-weight: 400; }
+
+.summary-flag {
+  margin-top: 2px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--color-warning);
+}
+
+.early-exit-gaps { margin: 10px 0 0 18px; }
+.early-exit-note { margin-top: 24px; }
+.early-exit-actions { flex-wrap: wrap; }
+
+/* Print styles — applies to the Step 6 roadmap and the early exit summary.
+   The app shell is a fixed-height, overflow-hidden flex layout on screen, which clips
+   printing to a single viewport; every ancestor of the content is unlocked here. */
 @media print {
-  .sidebar, .step-actions, .btn-primary, .btn-secondary { display: none !important; }
-  .main-content { overflow: visible; }
-  .step-container { padding: 20px; max-width: 100%; }
-  body { background: white; color: black; }
-  .roadmap-table th, .roadmap-table td { color: black; border-color: #ccc; }
+  :root, :root[data-theme] {
+    --color-bg-primary: #FFFFFF;
+    --color-bg-secondary: #FFFFFF;
+    --color-bg-surface: #FFFFFF;
+    --color-bg-elevated: #F3F5F8;
+    --color-accent: #1F4E8C;
+    --color-accent-dim: rgba(31, 78, 140, 0.10);
+    --color-text-primary: #111111;
+    --color-text-secondary: #333333;
+    --color-text-muted: #555555;
+    --color-success: #0A7A4A;
+    --color-success-dim: rgba(10, 122, 74, 0.10);
+    --color-warning: #8A5A00;
+    --color-warning-dim: rgba(138, 90, 0, 0.10);
+    --color-danger: #B3261E;
+    --color-danger-dim: rgba(179, 38, 30, 0.10);
+    --color-border: #C9D0DA;
+    --color-border-accent: #1F4E8C;
+    --shadow-sm: none;
+    --shadow-md: none;
+    --shadow-lg: none;
+  }
+
+  html, body, #root {
+    height: auto !important;
+    width: auto !important;
+    overflow: visible !important;
+  }
+
+  body {
+    background: #FFFFFF;
+    color: #111111;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .app-shell,
+  .main-content {
+    display: block !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  .sidebar,
+  .theme-switcher,
+  .step-actions,
+  .btn-primary,
+  .btn-secondary,
+  .edit-answers-panel,
+  .no-print { display: none !important; }
+
+  .print-only { display: block; }
+
+  .step-container { padding: 0; max-width: 100%; }
+
+  .print-header { break-after: avoid; }
+
+  /* Inline overflow:hidden wrappers (roadmap phase tables) must not clip fragmented content. */
+  .step-container [style*="overflow: hidden"] { overflow: visible !important; }
+
+  .roadmap-table thead { display: table-header-group; }
+  .roadmap-table tr,
+  .alert-card,
+  .sow-meter,
+  .unvalidated-item,
+  .message-bubble { break-inside: avoid; }
+  .step-container h2,
+  .step-container h3 { break-after: avoid; }
+
+  .roadmap-table th, .roadmap-table td { color: #111111; border-color: #C9D0DA; }
+  .owner-chip { border: 1px solid #C9D0DA; }
+  .owner--dw-sa { color: #5B34C9; }
+  :root[data-theme="high-contrast"] .owner-chip { color: #111111; border-color: #111111; background: transparent; }
+
+  @page {
+    size: auto;
+    margin: 12mm;
+  }
 }
 
 /* Validation Criteria Checklist — standalone print document */
@@ -1266,6 +1450,32 @@ textarea.text-input { resize: vertical; font-family: var(--font-sans); }
   padding: 8px 14px;
   border-radius: 4px;
   margin-bottom: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.checklist-session {
+  text-align: right;
+  border: 1px solid #5FD4FF;
+  border-radius: 4px;
+  padding: 3px 10px;
+}
+
+.checklist-session-label {
+  font-size: 7.5px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: #5FD4FF;
+  font-weight: 700;
+}
+
+.checklist-session-value {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: #fff;
 }
 
 .checklist-brand {

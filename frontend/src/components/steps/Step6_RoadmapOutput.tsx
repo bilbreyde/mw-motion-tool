@@ -1,23 +1,17 @@
 import { useEffect, useState } from 'react';
 import { ConversationalMessage } from '../ConversationalMessage';
 import { ChecklistPrintView } from '../ChecklistPrintView';
+import { PrintHeader } from '../PrintHeader';
 import type { MotionState, RoadmapStep, Owner } from '../../types';
 import { STEP_LABELS } from '../../types';
 import { callMotionAI } from '../../utils/api';
 import { renderAiText } from '../../utils/formatAiText';
-
-function printChecklist() {
-  document.body.classList.add('printing-checklist');
-  const cleanup = () => {
-    document.body.classList.remove('printing-checklist');
-    window.removeEventListener('afterprint', cleanup);
-  };
-  window.addEventListener('afterprint', cleanup);
-  window.print();
-}
+import { printDocument } from '../../utils/print';
 
 interface Props {
   state: MotionState;
+  // Ensures the session is saved (so it has an ID) before a document is printed.
+  onEnsureSession: () => Promise<string | null>;
   onUpdateRoadmap: (updates: Partial<MotionState['roadmapOutput']>) => void;
   onReset: () => void;
   onEditStep: (step: number) => void;
@@ -60,20 +54,18 @@ const FIELD_LABELS: Record<string, string> = {
   'customerProfile.deviceVolume': 'Device volume',
   'customerProfile.deploymentTimeline': 'Deployment timeline',
   'customerProfile.intuneAutopilotOwner': 'Intune/Autopilot environment owner',
+  'customerProfile.acceptableDeploymentTime': 'Acceptable provisioning time',
   'customerProfile.immediateProductivityRequired': 'Immediate productivity required at first login',
   'customerProfile.deploymentModelType': 'Deployment model type(s) (pilot/refresh/new hire/ongoing)',
   'customerProfile.multipleDeviceModels': 'Multiple device models involved',
-  'readinessCheck.intuneDeployedProduction': 'Gate 1 — Intune currently deployed and managing production devices',
-  'readinessCheck.autopilotConfiguredTestedProd': 'Gate 2 — Autopilot configured and tested in production',
-  'readinessCheck.autopilotDeployedBefore': 'Gate 3 — Prior successful Autopilot deployments',
-  'readinessCheck.autopilotProcessDocumented': 'Gate 4 — Autopilot process documented and repeatable',
-  'readinessCheck.intuneProductionReady': 'Gate 5 — Intune production-ready',
-  'readinessCheck.autopilotConfiguredTested': 'Gate 6 — Autopilot configured and tested',
-  'readinessCheck.enrollmentProfilesDefined': 'Gate 7 — Enrollment profiles defined',
-  'readinessCheck.groupTagsDefined': 'Gate 8 — Group Tags defined',
-  'readinessCheck.applicationsPackagedTested': 'Gate 9 — Applications packaged and tested',
-  'readinessCheck.firstArticlePlanned': 'Gate 10 — First-article deployment planned',
-  'readinessCheck.ownershipAssigned': 'Gate 11 — Ongoing Intune management ownership assigned',
+  'readinessCheck.autopilotProcessDocumented': 'Gate 1 — Autopilot process documented and repeatable',
+  'readinessCheck.intuneProductionReady': 'Gate 2 — Intune production-ready',
+  'readinessCheck.autopilotConfiguredTested': 'Gate 3 — Autopilot configured and tested',
+  'readinessCheck.enrollmentProfilesDefined': 'Gate 4 — Enrollment profiles defined',
+  'readinessCheck.groupTagsDefined': 'Gate 5 — Group Tags defined',
+  'readinessCheck.applicationsPackagedTested': 'Gate 6 — Applications packaged and tested',
+  'readinessCheck.firstArticlePlanned': 'Gate 7 — First-article deployment planned',
+  'readinessCheck.ownershipAssigned': 'Gate 8 — Ongoing Intune management ownership assigned',
   'readinessCheck.deploymentProfilesValidated': 'Autopilot deployment profiles created and validated',
   'readinessCheck.deviceGroupsConfigured': 'Device groups and dynamic assignments configured',
   'readinessCheck.groupTagsRequired': 'Group Tags required for deployment',
@@ -92,16 +84,27 @@ const FIELD_LABELS: Record<string, string> = {
   'engagementTriggers.shipToLocation': 'Ship-to location(s)',
   'engagementTriggers.adultSignatureRequired': 'Adult signature required',
   'engagementTriggers.assetTagsBiosCustomPackaging': 'Asset tags / BIOS / custom packaging required',
-  'engagementTriggers.regionalInternationalRequirements': 'Regional or international deployment requirements',
 };
 
-export function Step6_RoadmapOutput({ state, onUpdateRoadmap, onReset, onEditStep }: Props) {
+export function Step6_RoadmapOutput({ state, onEnsureSession, onUpdateRoadmap, onReset, onEditStep }: Props) {
   const {
     roadmapOutput, customerProfile, readinessCheck, deploymentRecommendation,
     engagementTriggers, firstArticle, discoveryMode, unvalidatedFields
   } = state;
 
   const [editPanelOpen, setEditPanelOpen] = useState(false);
+  const [preparingPrint, setPreparingPrint] = useState(false);
+
+  async function print(bodyClass?: string) {
+    setPreparingPrint(true);
+    try {
+      await onEnsureSession();
+      printDocument(bodyClass);
+    } finally {
+      setPreparingPrint(false);
+    }
+  }
+  const printDisabled = preparingPrint || roadmapOutput.loading;
 
   useEffect(() => {
     if (!roadmapOutput.aiSummary && !roadmapOutput.loading) {
@@ -136,11 +139,24 @@ export function Step6_RoadmapOutput({ state, onUpdateRoadmap, onReset, onEditSte
   }, []);
 
   const grouped = groupByPhase(roadmapOutput.steps);
-  const phases = PHASE_ORDER.filter(p => grouped[p]);
+  // Phases outside PHASE_ORDER are appended so no roadmap action is dropped from the screen or print.
+  const phases = [
+    ...PHASE_ORDER.filter(p => grouped[p]),
+    ...Object.keys(grouped).filter(p => !PHASE_ORDER.includes(p)),
+  ];
 
   return (
     <div className="step-container">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24 }}>
+      <PrintHeader title="Digital Workplace Roadmap" sessionCode={state.sessionCode} printOnly>
+        <span><strong>Customer:</strong> {customerProfile.customerName || '—'}</span>
+        <span><strong>Opportunity #:</strong> {customerProfile.opportunityNumber || '—'}</span>
+        <span><strong>SA:</strong> {customerProfile.saName || '—'}</span>
+        <span><strong>Seller:</strong> {customerProfile.sellerName || '—'}</span>
+        <span><strong>Generated:</strong> {new Date().toLocaleDateString('en-US', { dateStyle: 'long' })}</span>
+        {discoveryMode === 'validation' && <span><strong>Mode:</strong> Validation</span>}
+      </PrintHeader>
+
+      <div className="no-print roadmap-toolbar" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24 }}>
         <div>
           <h2 style={{ color: 'var(--color-text-primary)', marginBottom: 4 }}>
             Digital Workplace Roadmap
@@ -153,6 +169,7 @@ export function Step6_RoadmapOutput({ state, onUpdateRoadmap, onReset, onEditSte
           </p>
           <p style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)', margin: '4px 0 0' }}>
             Opportunity #{customerProfile.opportunityNumber || '—'} &nbsp;·&nbsp; SA: {customerProfile.saName || '—'} &nbsp;·&nbsp; Seller: {customerProfile.sellerName || '—'}
+            {state.sessionCode && <> &nbsp;·&nbsp; Session ID: {state.sessionCode}</>}
           </p>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
@@ -163,11 +180,11 @@ export function Step6_RoadmapOutput({ state, onUpdateRoadmap, onReset, onEditSte
           >
             {editPanelOpen ? 'Close Edit Answers' : 'Edit Answers'}
           </button>
-          <button className="btn-secondary" onClick={printChecklist} style={{ fontSize: '0.85rem', padding: '8px 16px' }}>
+          <button className="btn-secondary" onClick={() => print('printing-checklist')} disabled={preparingPrint} style={{ fontSize: '0.85rem', padding: '8px 16px' }}>
             Print Checklist
           </button>
-          <button className="btn-secondary" onClick={() => window.print()} style={{ fontSize: '0.85rem', padding: '8px 16px' }}>
-            Print / Export PDF
+          <button className="btn-secondary" onClick={() => print()} disabled={printDisabled} style={{ fontSize: '0.85rem', padding: '8px 16px' }}>
+            Print Roadmap
           </button>
         </div>
       </div>
@@ -349,7 +366,7 @@ export function Step6_RoadmapOutput({ state, onUpdateRoadmap, onReset, onEditSte
       )}
 
       <div className="step-actions">
-        {!roadmapOutput.loading && <button className="btn-secondary" onClick={() => window.print()}>Print Roadmap</button>}
+        <button className="btn-secondary" onClick={() => print()} disabled={printDisabled}>Print Roadmap</button>
         <button className="btn-secondary" onClick={onReset}>New Engagement</button>
       </div>
     </div>

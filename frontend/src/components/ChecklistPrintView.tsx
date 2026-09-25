@@ -3,9 +3,9 @@ import { createPortal } from 'react-dom';
 import type { MotionState } from '../types';
 import {
   INDUSTRIES, OS_OPTIONS, ENTRA_JOIN_TYPES, CO_MGMT_OPTIONS, MDM_PLATFORMS,
-  DEVICE_VOLUMES, TIMELINES, INTUNE_AUTOPILOT_OWNERS, DEPLOYMENT_MODEL_TYPES,
+  DEVICE_VOLUMES, TIMELINES, INTUNE_AUTOPILOT_OWNERS, DEPLOYMENT_MODEL_TYPES, PROVISIONING_TIME_OPTIONS,
 } from './steps/Step1_CustomerProfile';
-import { AUTOPILOT_PROFILES } from './steps/Step2_ReadinessGate';
+import { AUTOPILOT_PROFILES, GATE_QUESTIONS } from './steps/Step2_ReadinessGate';
 import { IMAGE_OPTIONS, PROVISIONING_OPTIONS } from './steps/Step3_DeploymentModel';
 import { DEVICE_IMPORT_METHODS, ENROLLMENT_HANDLERS, SHIP_TO_LOCATIONS } from './steps/Step4_EngagementTriggers';
 
@@ -18,21 +18,21 @@ interface Option<T extends string> {
   label: string;
 }
 
-function labelFor<T extends string>(options: Option<T>[], value: T | null): string {
+export function labelFor<T extends string>(options: Option<T>[], value: T | null): string {
   if (value === null) return '—';
   return options.find(o => o.value === value)?.label ?? value;
 }
 
-function labelForMany<T extends string>(options: Option<T>[], values: T[]): string {
+export function labelForMany<T extends string>(options: Option<T>[], values: T[]): string {
   if (values.length === 0) return '—';
   return values.map(v => options.find(o => o.value === v)?.label ?? v).join(', ');
 }
 
-function boolText(v: boolean | null): string {
+export function boolText(v: boolean | null): string {
   return v === null ? '—' : v ? 'Yes' : 'No';
 }
 
-function textOrDash(v: string): string {
+export function textOrDash(v: string): string {
   return v.trim() ? v : '—';
 }
 
@@ -74,27 +74,23 @@ export function ChecklistPrintView({ state }: Props) {
   const { customerProfile: p, readinessCheck: r, deploymentRecommendation: d, engagementTriggers: e, firstArticle: f, roadmapOutput: rm, discoveryMode, unvalidatedFields } = state;
   const uv = (key: string) => unvalidatedFields.includes(key);
 
-  const gateFields: [string, boolean | null, string][] = [
-    ['1. Is Microsoft Intune currently deployed and managing production devices?', r.intuneDeployedProduction, 'readinessCheck.intuneDeployedProduction'],
-    ['2. Is Windows Autopilot configured and tested in production?', r.autopilotConfiguredTestedProd, 'readinessCheck.autopilotConfiguredTestedProd'],
-    ['3. Have devices been successfully deployed using Autopilot before?', r.autopilotDeployedBefore, 'readinessCheck.autopilotDeployedBefore'],
-    ['4. Is the Autopilot deployment process documented and repeatable?', r.autopilotProcessDocumented, 'readinessCheck.autopilotProcessDocumented'],
-    ['5. Is Intune production-ready?', r.intuneProductionReady, 'readinessCheck.intuneProductionReady'],
-    ['6. Is Autopilot configured and tested?', r.autopilotConfiguredTested, 'readinessCheck.autopilotConfiguredTested'],
-    ['7. Are enrollment profiles defined?', r.enrollmentProfilesDefined, 'readinessCheck.enrollmentProfilesDefined'],
-    ['8. Are Group Tags defined?', r.groupTagsDefined, 'readinessCheck.groupTagsDefined'],
-    ['9. Are required applications packaged and tested?', r.applicationsPackagedTested, 'readinessCheck.applicationsPackagedTested'],
-    ['10. Has a first-article deployment been planned?', r.firstArticlePlanned, 'readinessCheck.firstArticlePlanned'],
-    ['11. Has ownership been assigned for ongoing Intune management?', r.ownershipAssigned, 'readinessCheck.ownershipAssigned'],
-  ];
+  const gateFields: [string, boolean | null, string][] = GATE_QUESTIONS.map(g => [
+    g.label, r[g.key], `readinessCheck.${g.key}`,
+  ]);
   const gatesPassed = gateFields.every(([, v, k]) => v === true || uv(k));
 
   const content = (
     <div id="checklist-print-root">
       <div className="checklist-doc">
         <div className="checklist-header">
-          <div className="checklist-brand">Zones Digital Workplace</div>
-          <h1>Validation Criteria Checklist</h1>
+          <div>
+            <div className="checklist-brand">Zones Digital Workplace</div>
+            <h1>Validation Criteria Checklist</h1>
+          </div>
+          <div className="checklist-session">
+            <div className="checklist-session-label">Session ID</div>
+            <div className="checklist-session-value">{state.sessionCode ?? 'Not saved'}</div>
+          </div>
         </div>
 
         <div className="checklist-meta-grid">
@@ -137,7 +133,7 @@ export function ChecklistPrintView({ state }: Props) {
           <tr>
             <td className="checklist-q"><strong>Overall Gate Result</strong></td>
             <td className={`checklist-a ${gatesPassed ? 'checklist-pass' : 'checklist-fail'}`}>
-              <strong>{gatesPassed ? 'PASS' : 'FAIL — ROUTE TO PRO SERVICES'}</strong>
+              <strong>{gatesPassed ? 'PASS' : 'FAIL — EARLY EXIT'}</strong>
             </td>
           </tr>
         </Section>
@@ -211,17 +207,13 @@ export function ChecklistPrintView({ state }: Props) {
           {e.assetTagsBiosCustomPackaging === true && (
             <Row label="Asset tag / BIOS / packaging detail" value={textOrDash(e.assetTagsBiosCustomPackagingDetail)} flagged={false} />
           )}
-          <Row label="Regional / international requirements?" value={boolText(e.regionalInternationalRequirements)} flagged={uv('engagementTriggers.regionalInternationalRequirements')} />
-          {e.regionalInternationalRequirements === true && (
-            <Row label="Regional / international detail" value={textOrDash(e.regionalInternationalRequirementsDetail)} flagged={false} />
-          )}
         </Section>
 
         <Section title="User Experience">
           <Row label="Desired first-login experience" value={textOrDash(p.desiredFirstLoginExperience)} flagged={uv('customerProfile.desiredFirstLoginExperience')} />
           <Row label="Immediate productivity required?" value={boolText(p.immediateProductivityRequired)} flagged={uv('customerProfile.immediateProductivityRequired')} />
           <Row label="Day-one required applications" value={textOrDash(p.day1RequiredApps)} flagged={uv('customerProfile.day1RequiredApps')} />
-          <Row label="Acceptable deployment time" value={textOrDash(p.acceptableDeploymentTime)} flagged={uv('customerProfile.acceptableDeploymentTime')} />
+          <Row label="Acceptable provisioning time" value={labelFor(PROVISIONING_TIME_OPTIONS, p.acceptableDeploymentTime || null)} flagged={uv('customerProfile.acceptableDeploymentTime')} />
           <Row label="Current process issues" value={textOrDash(p.currentProcessIssues)} flagged={uv('customerProfile.currentProcessIssues')} />
         </Section>
 
@@ -257,7 +249,7 @@ export function ChecklistPrintView({ state }: Props) {
         )}
 
         <div className="checklist-footer">
-          Zones Digital Workplace — Validation Criteria Checklist — Generated {new Date().toLocaleString('en-US')} — For TSC / CSP handoff use only
+          Zones Digital Workplace — Validation Criteria Checklist — Session {state.sessionCode ?? 'not saved'} — Generated {new Date().toLocaleString('en-US')} — For TSC / CSP handoff use only
         </div>
       </div>
     </div>

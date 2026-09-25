@@ -6,7 +6,7 @@ import { TextField } from '../TextField';
 import type {
   CustomerProfile, DiscoveryMode, Industry, EntraJoinType,
   CoManagementStatus, MdmPlatform, DeviceVolume, DeploymentTimeline, PrimaryOs,
-  IntuneAutopilotOwner, DeploymentModelType
+  IntuneAutopilotOwner, DeploymentModelType, ProvisioningTimeAcceptable
 } from '../../types';
 import { isFieldAnswered } from '../../types';
 
@@ -80,6 +80,13 @@ export const INTUNE_AUTOPILOT_OWNERS: { value: IntuneAutopilotOwner; label: stri
   { value: 'partner', label: 'Managed Service Partner', sublabel: 'Outsourced to an MSP or partner' },
   { value: 'both', label: 'Internal + Partner', sublabel: 'Shared ownership model' },
   { value: 'not-assigned', label: 'Not Yet Assigned', sublabel: 'No clear owner today' },
+];
+
+export const PROVISIONING_TIME_OPTIONS: { value: ProvisioningTimeAcceptable; label: string }[] = [
+  { value: 'under-15-min', label: 'Under 15 minutes' },
+  { value: '15-30-min', label: '15–30 minutes' },
+  { value: '30-90-plus-min', label: '30–90+ minutes' },
+  { value: 'unvalidated', label: 'Unvalidated — confirm with customer' },
 ];
 
 export const DEPLOYMENT_MODEL_TYPES: { value: DeploymentModelType; label: string; sublabel: string }[] = [
@@ -460,17 +467,30 @@ export function Step1_CustomerProfile({ profile, discoveryMode, unvalidatedField
         multiline
       />
 
-      <TextField
-        label="What provisioning time is acceptable to the business?"
-        value={profile.acceptableDeploymentTime}
-        placeholder="e.g. Device must be ready within 2 business days of order"
-        fieldKey="customerProfile.acceptableDeploymentTime"
-        discoveryMode={discoveryMode}
-        unvalidatedFields={unvalidatedFields}
-        onChange={v => onUpdate({ acceptableDeploymentTime: v })}
-        onMarkUnvalidated={onMarkUnvalidated}
-        onClearUnvalidated={onClearUnvalidated}
-      />
+      <div className="form-section">
+        <div className="form-label">What provisioning time is acceptable to the business?</div>
+        <div className="option-grid">
+          {PROVISIONING_TIME_OPTIONS.map(o => (
+            <OptionButton
+              key={o.value}
+              label={o.label}
+              selected={profile.acceptableDeploymentTime === o.value}
+              variant={o.value === 'unvalidated' ? 'unvalidated' : undefined}
+              sublabel={o.value === 'unvalidated' ? 'Flag for follow-up before ordering' : undefined}
+              onClick={() => {
+                onUpdate({ acceptableDeploymentTime: o.value });
+                // "Unvalidated" is a real option here (not just a validation-mode toggle), so it
+                // must also land in unvalidatedFields to surface as a roadmap blocker.
+                if (o.value === 'unvalidated') onMarkUnvalidated('customerProfile.acceptableDeploymentTime');
+                else onClearUnvalidated('customerProfile.acceptableDeploymentTime');
+              }}
+            />
+          ))}
+        </div>
+        {uv('customerProfile.acceptableDeploymentTime') && (
+          <div className="unvalidated-flag">⚠ Unvalidated — confirm with customer</div>
+        )}
+      </div>
 
       <TextField
         label="What issues are users experiencing with the current process?"

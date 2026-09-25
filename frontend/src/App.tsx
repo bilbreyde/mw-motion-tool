@@ -1,26 +1,22 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { flushSync } from 'react-dom';
 import { Sidebar } from './components/Sidebar';
 import { SessionSavedModal } from './components/SessionSavedModal';
 import { ThemeSwitcher } from './components/ThemeSwitcher';
 import { DiscoveryModeSelector } from './components/DiscoveryModeSelector';
 import { Step1_CustomerProfile } from './components/steps/Step1_CustomerProfile';
-import { Step2_ReadinessGate } from './components/steps/Step2_ReadinessGate';
+import { Step2_ReadinessGate, GATE_QUESTIONS } from './components/steps/Step2_ReadinessGate';
 import { Step3_DeploymentModel } from './components/steps/Step3_DeploymentModel';
 import { Step4_EngagementTriggers } from './components/steps/Step4_EngagementTriggers';
 import { Step5_FirstArticle } from './components/steps/Step5_FirstArticle';
 import { Step6_RoadmapOutput } from './components/steps/Step6_RoadmapOutput';
-import { ProServicesRoute } from './components/ProServicesRoute';
+import { EarlyExitScreen } from './components/EarlyExitScreen';
 import { useMotionState } from './hooks/useMotionState';
 import { useTheme } from './hooks/useTheme';
 import { isFieldAnswered } from './types';
-import type { ReadinessCheck } from './types';
 import { saveSession, loadSession } from './utils/sessionApi';
 
-const READINESS_GATE_KEYS: (keyof ReadinessCheck)[] = [
-  'intuneDeployedProduction', 'autopilotConfiguredTestedProd', 'autopilotDeployedBefore', 'autopilotProcessDocumented',
-  'intuneProductionReady', 'autopilotConfiguredTested', 'enrollmentProfilesDefined',
-  'groupTagsDefined', 'applicationsPackagedTested', 'firstArticlePlanned', 'ownershipAssigned',
-];
+const READINESS_GATE_KEYS = GATE_QUESTIONS.map(g => g.key);
 
 export default function App() {
   const {
@@ -135,8 +131,7 @@ export default function App() {
       answered(engagementTriggers.shipToLocation, 'engagementTriggers.shipToLocation') &&
       (!engagementTriggers.shipToLocation.includes('home') ||
         answered(engagementTriggers.adultSignatureRequired, 'engagementTriggers.adultSignatureRequired')) &&
-      answered(engagementTriggers.assetTagsBiosCustomPackaging, 'engagementTriggers.assetTagsBiosCustomPackaging') &&
-      answered(engagementTriggers.regionalInternationalRequirements, 'engagementTriggers.regionalInternationalRequirements')
+      answered(engagementTriggers.assetTagsBiosCustomPackaging, 'engagementTriggers.assetTagsBiosCustomPackaging')
     ) completed.add(4);
 
     if (firstArticle.required !== null) completed.add(5);
@@ -150,13 +145,41 @@ export default function App() {
     if (gatesOk) nextStep();
   }
 
-  function handleRouteToProServices() {
+  function handleEarlyExit() {
     updateReadinessCheck({ routedToProServices: true });
   }
 
-  const isRoutedToProServices =
-    readinessCheck.routedToProServices &&
-    READINESS_GATE_KEYS.some(k => readinessCheck[k] === false);
+  // Any explicit (validated) No on a Step 2 gate blocks Steps 3–6.
+  const gateFailed = READINESS_GATE_KEYS.some(k => readinessCheck[k] === false && !uv.includes(`readinessCheck.${k}`));
+  const isEarlyExit = readinessCheck.routedToProServices && gateFailed;
+
+  function handleStepClick(step: number) {
+    if (gateFailed && step > 2) return;
+    if (isEarlyExit) updateReadinessCheck({ routedToProServices: false });
+    goToStep(step);
+  }
+
+  // Printed documents carry the session ID, which only exists once the session is saved.
+  // `force` re-saves an already-saved session so the stored copy matches what is printed.
+  const pendingSaveRef = useRef<Promise<string | null> | null>(null);
+  function saveSessionForPrint(force: boolean): Promise<string | null> {
+    if (sessionCode && !force) return Promise.resolve(sessionCode);
+    if (!pendingSaveRef.current) {
+      pendingSaveRef.current = (async () => {
+        try {
+          const result = await saveSession(state, sessionCode);
+          // Commit synchronously so the DOM already shows the ID when window.print() runs.
+          flushSync(() => setSessionMeta({ sessionCode: result.sessionCode, lastSavedAt: result.updatedAt }));
+          return result.sessionCode;
+        } catch {
+          return sessionCode;
+        } finally {
+          pendingSaveRef.current = null;
+        }
+      })();
+    }
+    return pendingSaveRef.current;
+  }
 
   if (!discoveryMode) {
     return (
@@ -179,8 +202,8 @@ export default function App() {
         currentStep={currentStep}
         completedSteps={completedSteps}
         discoveryMode={discoveryMode}
-        blockedAtStep={isRoutedToProServices ? 2 : undefined}
-        onStepClick={goToStep}
+        blockedAtStep={gateFailed ? 2 : undefined}
+        onStepClick={handleStepClick}
         onReset={reset}
         sessionCode={sessionCode}
         lastSavedAt={lastSavedAt}
@@ -190,10 +213,11 @@ export default function App() {
       />
 
       <main className="main-content" ref={mainContentRef}>
-        {isRoutedToProServices ? (
-          <ProServicesRoute
-            profile={customerProfile}
-            readiness={readinessCheck}
+        {isEarlyExit ? (
+          <EarlyExitScreen
+            state={state}
+            onSaveForPrint={() => saveSessionForPrint(true)}
+            onBackToStep2={() => updateReadinessCheck({ routedToProServices: false })}
             onReset={reset}
           />
         ) : (
@@ -219,7 +243,7 @@ export default function App() {
                 onMarkUnvalidated={markUnvalidated}
                 onClearUnvalidated={clearUnvalidated}
                 onNext={handleReadinessNext}
-                onRouteToProServices={handleRouteToProServices}
+                onEarlyExit={handleEarlyExit}
               />
             )}
             {currentStep === 3 && (
@@ -263,6 +287,7 @@ export default function App() {
             {currentStep === 6 && (
               <Step6_RoadmapOutput
                 state={state}
+                onEnsureSession={() => saveSessionForPrint(false)}
                 onUpdateRoadmap={updateRoadmap}
                 onReset={reset}
                 onEditStep={editStep}

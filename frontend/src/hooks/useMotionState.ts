@@ -1,6 +1,15 @@
 import { useState, useCallback } from 'react';
 import type { MotionState, DiscoveryMode, CustomerProfile, ReadinessCheck, DeploymentRecommendation, EngagementTriggers, FirstArticle } from '../types';
 
+// Questions removed from the tool; sessions saved earlier may still flag them as unvalidated.
+const RETIRED_FIELD_KEYS = new Set([
+  'readinessCheck.intuneDeployedProduction',
+  'readinessCheck.autopilotConfiguredTestedProd',
+  'readinessCheck.autopilotDeployedBefore',
+  'engagementTriggers.regionalInternationalRequirements',
+  'engagementTriggers.regionalInternationalRequirementsDetail',
+]);
+
 const initialState: MotionState = {
   currentStep: 1,
   discoveryMode: null,
@@ -21,7 +30,7 @@ const initialState: MotionState = {
     desiredFirstLoginExperience: '',
     immediateProductivityRequired: null,
     day1RequiredApps: '',
-    acceptableDeploymentTime: '',
+    acceptableDeploymentTime: null,
     currentProcessIssues: '',
     devicesPerMonthQuarter: '',
     deploymentModelType: [],
@@ -30,9 +39,6 @@ const initialState: MotionState = {
     pilotSuccessCriteria: '',
   },
   readinessCheck: {
-    intuneDeployedProduction: null,
-    autopilotConfiguredTestedProd: null,
-    autopilotDeployedBefore: null,
     autopilotProcessDocumented: null,
     intuneProductionReady: null,
     autopilotConfiguredTested: null,
@@ -77,8 +83,6 @@ const initialState: MotionState = {
     adultSignatureRequired: null,
     assetTagsBiosCustomPackaging: null,
     assetTagsBiosCustomPackagingDetail: '',
-    regionalInternationalRequirements: null,
-    regionalInternationalRequirementsDetail: '',
   },
   firstArticle: {
     required: null,
@@ -196,6 +200,7 @@ export function useMotionState() {
   const loadState = useCallback((loaded: MotionState, sessionCode: string, updatedAt: string) => {
     setState({
       ...loaded,
+      unvalidatedFields: loaded.unvalidatedFields.filter(k => !RETIRED_FIELD_KEYS.has(k)),
       sessionCode,
       lastSavedAt: updatedAt,
       editReturnStep: null,

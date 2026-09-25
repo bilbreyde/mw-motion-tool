@@ -25,6 +25,7 @@ export type IntuneAutopilotOwner = 'internal-team' | 'partner' | 'both' | 'not-a
 export type DeploymentModelType = 'pilot' | 'refresh' | 'new-hire' | 'ongoing';
 export type DeviceImportMethod = 'oem-direct' | 'reseller-csv' | 'partner-center' | 'manual-other';
 export type EnrollmentHandledBy = 'oem' | 'zones';
+export type ProvisioningTimeAcceptable = 'under-15-min' | '15-30-min' | '30-90-plus-min' | 'unvalidated';
 export type ShipToLocation = 'home' | 'office' | 'distribution-center' | 'zones-tsc-hold' | 'international';
 
 export interface CustomerProfile {
@@ -47,7 +48,7 @@ export interface CustomerProfile {
   desiredFirstLoginExperience: string;
   immediateProductivityRequired: boolean | null;
   day1RequiredApps: string;
-  acceptableDeploymentTime: string;
+  acceptableDeploymentTime: ProvisioningTimeAcceptable | null;
   currentProcessIssues: string;
 
   // Category 8 - Scale & Operational Planning
@@ -59,11 +60,8 @@ export interface CustomerProfile {
 }
 
 export interface ReadinessCheck {
-  // Step 2 Readiness Gate — the 11 official go/no-go questions. ALL must be Yes to proceed;
-  // any explicit No stops the engagement and routes to Autopilot/Intune Pro Services, no exceptions.
-  intuneDeployedProduction: boolean | null;
-  autopilotConfiguredTestedProd: boolean | null;
-  autopilotDeployedBefore: boolean | null;
+  // Step 2 Readiness Gate — the 8 official go/no-go questions. ALL must be Yes to proceed;
+  // any explicit No exits early to the summary/PDF screen (Steps 3–6 are not reachable).
   autopilotProcessDocumented: boolean | null;
   intuneProductionReady: boolean | null;
   autopilotConfiguredTested: boolean | null;
@@ -84,6 +82,7 @@ export interface ReadinessCheck {
   enrollmentRestrictionsDetail: string;
 
   autopilotProfileType: AutopilotProfileType | null;
+  // true once the SA has chosen to exit early from a failed gate to the summary screen.
   routedToProServices: boolean;
 }
 
@@ -127,8 +126,6 @@ export interface EngagementTriggers {
   adultSignatureRequired: boolean | null;
   assetTagsBiosCustomPackaging: boolean | null;
   assetTagsBiosCustomPackagingDetail: string;
-  regionalInternationalRequirements: boolean | null;
-  regionalInternationalRequirementsDetail: string;
 }
 
 export interface FirstArticle {
