@@ -1,5 +1,8 @@
 import { useState, useCallback } from 'react';
-import type { MotionState, DiscoveryMode, CustomerProfile, ReadinessCheck, DeploymentRecommendation, EngagementTriggers, FirstArticle } from '../types';
+import type {
+  MotionState, DiscoveryMode, SalesMotion, CustomerProfile, ReadinessCheck, DeploymentRecommendation,
+  EngagementTriggers, FirstArticle, ProServicesState, PsLoeEstimate,
+} from '../types';
 
 // Questions removed from the tool; sessions saved earlier may still flag them as unvalidated.
 const RETIRED_FIELD_KEYS = new Set([
@@ -10,8 +13,50 @@ const RETIRED_FIELD_KEYS = new Set([
   'engagementTriggers.regionalInternationalRequirementsDetail',
 ]);
 
+const initialLoe: PsLoeEstimate = {
+  areaLines: [],
+  summary: '',
+  assumptions: [],
+  risks: [],
+  generatedAt: '',
+  error: '',
+  loading: false,
+};
+
+const initialProServices: ProServicesState = {
+  engagementType: null,
+  deviceCount: null,
+  currentMdm: [],
+  osLandscape: [],
+  environmentNotes: '',
+  configStatus: {
+    intuneTenant: null,
+    autopilotProfiles: null,
+    esp: null,
+    groupTags: null,
+    appPackaging: null,
+    securityBaselines: null,
+    conditionalAccess: null,
+    deviceCompliance: null,
+    networkVpn: null,
+    identityJoin: null,
+  },
+  customIntegrations: null,
+  customIntegrationsDetail: '',
+  customCspProfiles: null,
+  customCspProfilesDetail: '',
+  multiTenant: null,
+  thirdPartyAppPackaging: null,
+  loe: initialLoe,
+};
+
+function lastStepFor(motion: SalesMotion): number {
+  return motion === 'pro-services' ? 5 : 6;
+}
+
 const initialState: MotionState = {
   currentStep: 1,
+  motion: 'provisioning',
   discoveryMode: null,
   unvalidatedFields: [],
   customerProfile: {
@@ -98,6 +143,7 @@ const initialState: MotionState = {
     generatedAt: '',
     loading: false,
   },
+  proServices: initialProServices,
   sessionCode: null,
   lastSavedAt: null,
   editReturnStep: null,
@@ -106,8 +152,8 @@ const initialState: MotionState = {
 export function useMotionState() {
   const [state, setState] = useState<MotionState>(initialState);
 
-  const setDiscoveryMode = useCallback((mode: DiscoveryMode) => {
-    setState(prev => ({ ...prev, discoveryMode: mode }));
+  const startSession = useCallback((motion: SalesMotion, mode: DiscoveryMode) => {
+    setState(prev => ({ ...prev, motion, discoveryMode: mode }));
   }, []);
 
   const markUnvalidated = useCallback((fieldKey: string) => {
@@ -137,16 +183,18 @@ export function useMotionState() {
           ...prev,
           currentStep: prev.editReturnStep,
           editReturnStep: null,
-          // Force Step 6 to regenerate the roadmap against the edited answers.
-          roadmapOutput: { ...prev.roadmapOutput, steps: [], aiSummary: '', loading: false },
+          // Force the output step to regenerate the roadmap / LOE against the edited answers.
+          ...(prev.motion === 'pro-services'
+            ? { proServices: { ...prev.proServices, loe: initialLoe } }
+            : { roadmapOutput: { ...prev.roadmapOutput, steps: [], aiSummary: '', loading: false } }),
         };
       }
-      return { ...prev, currentStep: Math.min(prev.currentStep + 1, 6) };
+      return { ...prev, currentStep: Math.min(prev.currentStep + 1, lastStepFor(prev.motion)) };
     });
   }, []);
 
   const editStep = useCallback((step: number) => {
-    setState(prev => ({ ...prev, currentStep: step, editReturnStep: 6 }));
+    setState(prev => ({ ...prev, currentStep: step, editReturnStep: lastStepFor(prev.motion) }));
   }, []);
 
   const updateCustomerProfile = useCallback((updates: Partial<CustomerProfile>) => {
@@ -191,6 +239,20 @@ export function useMotionState() {
     }));
   }, []);
 
+  const updateProServices = useCallback((updates: Partial<ProServicesState>) => {
+    setState(prev => ({
+      ...prev,
+      proServices: { ...prev.proServices, ...updates },
+    }));
+  }, []);
+
+  const updateLoe = useCallback((updates: Partial<PsLoeEstimate>) => {
+    setState(prev => ({
+      ...prev,
+      proServices: { ...prev.proServices, loe: { ...prev.proServices.loe, ...updates } },
+    }));
+  }, []);
+
   const reset = useCallback(() => setState(initialState), []);
 
   const setSessionMeta = useCallback((updates: { sessionCode?: string | null; lastSavedAt?: string | null }) => {
@@ -198,8 +260,16 @@ export function useMotionState() {
   }, []);
 
   const loadState = useCallback((loaded: MotionState, sessionCode: string, updatedAt: string) => {
+    const ps = loaded.proServices;
     setState({
       ...loaded,
+      motion: loaded.motion ?? 'provisioning',
+      proServices: {
+        ...initialProServices,
+        ...ps,
+        configStatus: { ...initialProServices.configStatus, ...ps?.configStatus },
+        loe: { ...initialLoe, ...ps?.loe, loading: false },
+      },
       unvalidatedFields: loaded.unvalidatedFields.filter(k => !RETIRED_FIELD_KEYS.has(k)),
       sessionCode,
       lastSavedAt: updatedAt,
@@ -212,7 +282,7 @@ export function useMotionState() {
 
   return {
     state,
-    setDiscoveryMode,
+    startSession,
     markUnvalidated,
     clearUnvalidated,
     goToStep,
@@ -224,6 +294,8 @@ export function useMotionState() {
     updateEngagementTriggers,
     updateFirstArticle,
     updateRoadmap,
+    updateProServices,
+    updateLoe,
     reset,
     setSessionMeta,
     loadState,

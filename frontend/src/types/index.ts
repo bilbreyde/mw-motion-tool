@@ -1,4 +1,6 @@
 export type DiscoveryMode = 'live' | 'validation';
+// Which sales motion the session runs. Sessions saved before motions existed are 'provisioning'.
+export type SalesMotion = 'provisioning' | 'pro-services';
 
 export type Industry =
   | 'healthcare'
@@ -154,8 +156,69 @@ export interface RoadmapOutput {
   loading: boolean;
 }
 
+// ── Autopilot/Intune Professional Services Discovery motion ──────────────────
+export type PsEngagementType = 'assessment' | 'greenfield' | 'migration';
+export type PsDeviceCount = 'under-250' | '251-1000' | '1001-5000' | '5000+';
+export type ConfigStatus = 'complete' | 'in-progress' | 'not-started';
+export type ConfigAreaKey =
+  | 'intuneTenant'
+  | 'autopilotProfiles'
+  | 'esp'
+  | 'groupTags'
+  | 'appPackaging'
+  | 'securityBaselines'
+  | 'conditionalAccess'
+  | 'deviceCompliance'
+  | 'networkVpn'
+  | 'identityJoin';
+
+// AI-proposed baseline implementation hours for one configuration area, before the
+// status reduction (Complete −80%, In Progress −40%) is applied in the frontend.
+export interface PsLoeAreaLine {
+  area: ConfigAreaKey;
+  baseHoursLow: number;
+  baseHoursHigh: number;
+  rationale: string;
+}
+
+export interface PsLoeEstimate {
+  areaLines: PsLoeAreaLine[];
+  summary: string;
+  assumptions: string[];
+  risks: string[];
+  generatedAt: string;
+  error: string;
+  loading: boolean;
+}
+
+export interface ProServicesState {
+  // Step 1 — Engagement Type
+  engagementType: PsEngagementType | null;
+
+  // Step 2 — Environment Profile
+  deviceCount: PsDeviceCount | null;
+  currentMdm: MdmPlatform[];
+  osLandscape: PrimaryOs[];
+  environmentNotes: string;
+
+  // Step 3 — Configuration Status Assessment
+  configStatus: Record<ConfigAreaKey, ConfigStatus | null>;
+
+  // Step 4 — Complexity Indicators
+  customIntegrations: boolean | null;
+  customIntegrationsDetail: string;
+  customCspProfiles: boolean | null;
+  customCspProfilesDetail: string;
+  multiTenant: boolean | null;
+  thirdPartyAppPackaging: boolean | null;
+
+  // Step 5 — Outputs
+  loe: PsLoeEstimate;
+}
+
 export interface MotionState {
   currentStep: number;
+  motion: SalesMotion;
   discoveryMode: DiscoveryMode | null;
   unvalidatedFields: string[];
   customerProfile: CustomerProfile;
@@ -164,10 +227,11 @@ export interface MotionState {
   engagementTriggers: EngagementTriggers;
   firstArticle: FirstArticle;
   roadmapOutput: RoadmapOutput;
+  proServices: ProServicesState;
   sessionCode: string | null;
   lastSavedAt: string | null;
   // Set when the SA jumps back to an earlier step to edit an answer from Step 6.
-  // nextStep() returns here instead of advancing, and roadmap regeneration is forced.
+  // nextStep() returns here instead of advancing, and roadmap/LOE regeneration is forced.
   editReturnStep: number | null;
 }
 
@@ -187,7 +251,7 @@ export interface LoadSessionResponse {
 
 export interface AiMotionRequest {
   step: number;
-  action: 'recommend-deployment' | 'first-article-guidance' | 'generate-roadmap';
+  action: 'recommend-deployment' | 'first-article-guidance' | 'generate-roadmap' | 'estimate-loe';
   customerProfile: CustomerProfile;
   discoveryMode?: DiscoveryMode;
   unvalidatedFields?: string[];
@@ -195,6 +259,7 @@ export interface AiMotionRequest {
   deploymentRecommendation?: DeploymentRecommendation;
   engagementTriggers?: EngagementTriggers;
   firstArticle?: FirstArticle;
+  proServices?: Omit<ProServicesState, 'loe'>;
 }
 
 export interface AiMotionResponse {
@@ -205,6 +270,9 @@ export interface AiMotionResponse {
   validationCriteria?: string[];
   guidance?: string;
   roadmap?: Omit<RoadmapOutput, 'loading'>;
+  areaLines?: PsLoeAreaLine[];
+  assumptions?: string[];
+  risks?: string[];
   error?: string;
 }
 
@@ -215,6 +283,19 @@ export const STEP_LABELS: Record<number, string> = {
   4: 'Engagement Triggers',
   5: 'First Article',
   6: 'Roadmap Output',
+};
+
+export const PS_STEP_LABELS: Record<number, string> = {
+  1: 'Engagement Type',
+  2: 'Environment Profile',
+  3: 'Configuration Status',
+  4: 'Complexity Indicators',
+  5: 'Requirements & LOE',
+};
+
+export const MOTION_LABELS: Record<SalesMotion, string> = {
+  'provisioning': 'Provisioning Motion',
+  'pro-services': 'Autopilot/Intune Pro Services Discovery',
 };
 
 export function isFieldAnswered(value: unknown, fieldKey: string, unvalidatedFields: string[]): boolean {

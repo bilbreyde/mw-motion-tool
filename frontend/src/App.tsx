@@ -11,9 +11,16 @@ import { Step4_EngagementTriggers } from './components/steps/Step4_EngagementTri
 import { Step5_FirstArticle } from './components/steps/Step5_FirstArticle';
 import { Step6_RoadmapOutput } from './components/steps/Step6_RoadmapOutput';
 import { EarlyExitScreen } from './components/EarlyExitScreen';
+import { PsStep1_EngagementType } from './components/proServices/PsStep1_EngagementType';
+import { PsStep2_EnvironmentProfile } from './components/proServices/PsStep2_EnvironmentProfile';
+import { PsStep3_ConfigStatus } from './components/proServices/PsStep3_ConfigStatus';
+import { PsStep4_Complexity } from './components/proServices/PsStep4_Complexity';
+import { PsStep5_Outputs } from './components/proServices/PsStep5_Outputs';
+import { psCompletedSteps } from './components/proServices/psConfig';
 import { useMotionState } from './hooks/useMotionState';
 import { useTheme } from './hooks/useTheme';
-import { isFieldAnswered } from './types';
+import { isFieldAnswered, PS_STEP_LABELS, STEP_LABELS } from './types';
+import { loeBlockers } from './utils/psLoe';
 import { saveSession, loadSession } from './utils/sessionApi';
 
 const READINESS_GATE_KEYS = GATE_QUESTIONS.map(g => g.key);
@@ -21,7 +28,7 @@ const READINESS_GATE_KEYS = GATE_QUESTIONS.map(g => g.key);
 export default function App() {
   const {
     state,
-    setDiscoveryMode,
+    startSession,
     markUnvalidated,
     clearUnvalidated,
     goToStep,
@@ -32,6 +39,8 @@ export default function App() {
     updateEngagementTriggers,
     updateFirstArticle,
     updateRoadmap,
+    updateProServices,
+    updateLoe,
     reset,
     editStep,
     setSessionMeta,
@@ -39,9 +48,9 @@ export default function App() {
   } = useMotionState();
 
   const {
-    currentStep, discoveryMode, unvalidatedFields,
+    currentStep, motion, discoveryMode, unvalidatedFields,
     customerProfile, readinessCheck, deploymentRecommendation,
-    engagementTriggers, firstArticle, roadmapOutput,
+    engagementTriggers, firstArticle, roadmapOutput, proServices,
     sessionCode, lastSavedAt,
   } = state;
 
@@ -89,6 +98,10 @@ export default function App() {
   }
 
   const completedSteps = useMemo(() => {
+    if (motion === 'pro-services') {
+      return psCompletedSteps(customerProfile, proServices, uv, loeBlockers(proServices, uv).length > 0);
+    }
+
     const completed = new Set<number>();
 
     if (
@@ -149,8 +162,8 @@ export default function App() {
     updateReadinessCheck({ routedToProServices: true });
   }
 
-  // Any explicit (validated) No on a Step 2 gate blocks Steps 3–6.
-  const gateFailed = READINESS_GATE_KEYS.some(k => readinessCheck[k] === false && !uv.includes(`readinessCheck.${k}`));
+  // Any explicit (validated) No on a Step 2 gate blocks Steps 3–6. Provisioning motion only.
+  const gateFailed = motion === 'provisioning' && READINESS_GATE_KEYS.some(k => readinessCheck[k] === false && !uv.includes(`readinessCheck.${k}`));
   const isEarlyExit = readinessCheck.routedToProServices && gateFailed;
 
   function handleStepClick(step: number) {
@@ -186,7 +199,7 @@ export default function App() {
       <>
         <ThemeSwitcher theme={theme} onChange={setTheme} />
         <DiscoveryModeSelector
-          onSelect={setDiscoveryMode}
+          onSelect={startSession}
           onResumeSession={handleResumeSession}
           resuming={resuming}
           resumeError={resumeError}
@@ -195,10 +208,22 @@ export default function App() {
     );
   }
 
+  const psStepProps = {
+    ps: proServices,
+    discoveryMode,
+    unvalidatedFields: uv,
+    onUpdate: updateProServices,
+    onMarkUnvalidated: markUnvalidated,
+    onClearUnvalidated: clearUnvalidated,
+    onNext: nextStep,
+  };
+
   return (
     <div className="app-shell">
       <ThemeSwitcher theme={theme} onChange={setTheme} />
       <Sidebar
+        motion={motion}
+        stepLabels={motion === 'pro-services' ? PS_STEP_LABELS : STEP_LABELS}
         currentStep={currentStep}
         completedSteps={completedSteps}
         discoveryMode={discoveryMode}
@@ -213,7 +238,29 @@ export default function App() {
       />
 
       <main className="main-content" ref={mainContentRef}>
-        {isEarlyExit ? (
+        {motion === 'pro-services' ? (
+          <>
+            {currentStep === 1 && (
+              <PsStep1_EngagementType
+                profile={customerProfile}
+                onUpdateProfile={updateCustomerProfile}
+                {...psStepProps}
+              />
+            )}
+            {currentStep === 2 && <PsStep2_EnvironmentProfile {...psStepProps} />}
+            {currentStep === 3 && <PsStep3_ConfigStatus {...psStepProps} />}
+            {currentStep === 4 && <PsStep4_Complexity {...psStepProps} />}
+            {currentStep === 5 && (
+              <PsStep5_Outputs
+                state={state}
+                onEnsureSession={() => saveSessionForPrint(false)}
+                onUpdateLoe={updateLoe}
+                onReset={reset}
+                onEditStep={editStep}
+              />
+            )}
+          </>
+        ) : isEarlyExit ? (
           <EarlyExitScreen
             state={state}
             onSaveForPrint={() => saveSessionForPrint(true)}

@@ -94,6 +94,10 @@ async function saveSessionHandler(request: HttpRequest, context: InvocationConte
     const customerProfile = (s.customerProfile ?? {}) as Record<string, unknown>;
     const roadmapOutput = (s.roadmapOutput ?? {}) as Record<string, unknown>;
     const steps = Array.isArray(roadmapOutput.steps) ? roadmapOutput.steps : [];
+    const proServices = (s.proServices ?? {}) as Record<string, unknown>;
+    const loe = (proServices.loe ?? {}) as Record<string, unknown>;
+    const motion = s.motion === 'pro-services' ? 'pro-services' : 'provisioning';
+    const complete = motion === 'pro-services' ? Boolean(loe.generatedAt) : steps.length > 0;
 
     let code = typeof sessionCode === 'string' && sessionCode.trim() ? sessionCode.trim().toUpperCase() : null;
     let createdAt = now;
@@ -112,9 +116,10 @@ async function saveSessionHandler(request: HttpRequest, context: InvocationConte
       opportunityNumber: customerProfile.opportunityNumber ?? '',
       saName: customerProfile.saName ?? '',
       sellerName: customerProfile.sellerName ?? '',
+      motion,
       discoveryMode: s.discoveryMode ?? null,
       state: s,
-      completionStatus: steps.length > 0 ? 'complete' : 'in-progress',
+      completionStatus: complete ? 'complete' : 'in-progress',
       createdAt,
       updatedAt: now,
     };

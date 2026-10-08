@@ -1,7 +1,9 @@
-import type { DiscoveryMode } from '../types';
-import { STEP_LABELS } from '../types';
+import type { DiscoveryMode, SalesMotion } from '../types';
+import { MOTION_LABELS } from '../types';
 
 interface SidebarProps {
+  motion: SalesMotion;
+  stepLabels: Record<number, string>;
   currentStep: number;
   completedSteps: Set<number>;
   discoveryMode: DiscoveryMode | null;
@@ -28,7 +30,7 @@ function formatRelativeTime(iso: string): string {
 }
 
 export function Sidebar({
-  currentStep, completedSteps, discoveryMode, blockedAtStep, onStepClick, onReset,
+  motion, stepLabels, currentStep, completedSteps, discoveryMode, blockedAtStep, onStepClick, onReset,
   sessionCode, lastSavedAt, saving, saveError, onSaveSession,
 }: SidebarProps) {
   return (
@@ -36,6 +38,7 @@ export function Sidebar({
       <div className="sidebar-header">
         <div className="sidebar-logo">ZONES</div>
         <div className="sidebar-subtitle">Digital Workplace Motion Tool</div>
+        <div className="sidebar-motion">{MOTION_LABELS[motion]}</div>
         {discoveryMode && (
           <div className={`discovery-mode-badge ${discoveryMode === 'live' ? 'discovery-mode-badge--live' : 'discovery-mode-badge--validation'}`}>
             {discoveryMode === 'live' ? '◉ Live Discovery' : '◎ Validation Mode'}
@@ -44,7 +47,7 @@ export function Sidebar({
       </div>
 
       <nav className="sidebar-steps">
-        {Object.entries(STEP_LABELS).map(([stepStr, label], index) => {
+        {Object.entries(stepLabels).map(([stepStr, label], index) => {
           const step = Number(stepStr);
           const isActive = step === currentStep;
           const isComplete = completedSteps.has(step);
@@ -78,7 +81,7 @@ export function Sidebar({
                 </div>
                 <span className="step-label">{label}</span>
               </div>
-              {index < Object.keys(STEP_LABELS).length - 1 && (
+              {index < Object.keys(stepLabels).length - 1 && (
                 <div className={connectorCls} />
               )}
             </div>
