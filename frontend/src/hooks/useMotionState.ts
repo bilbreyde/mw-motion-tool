@@ -51,7 +51,9 @@ const initialProServices: ProServicesState = {
 };
 
 function lastStepFor(motion: SalesMotion): number {
-  return motion === 'pro-services' ? 5 : 6;
+  if (motion === 'pro-services') return 5;
+  if (motion === 'ordering') return 3;
+  return 5; // provisioning
 }
 
 const initialState: MotionState = {

@@ -13,7 +13,13 @@ const MOTIONS: { value: SalesMotion; icon: string; title: string; desc: string }
     value: 'provisioning',
     icon: '▣',
     title: 'Provisioning Motion',
-    desc: 'Readiness gate, deployment model, TSC engagement, first article, and deployment roadmap for Autopilot provisioning orders.',
+    desc: 'Readiness gate, deployment model, first article, and deployment roadmap for new Autopilot provisioning engagements.',
+  },
+  {
+    value: 'ordering',
+    icon: '↺',
+    title: 'Ordering & Enrollment',
+    desc: 'Returning customer — capture device import method, enrollment registration, TSC alignment, and shipping logistics for a repeat Autopilot order.',
   },
   {
     value: 'pro-services',
@@ -107,7 +113,7 @@ export function DiscoveryModeSelector({ onSelect, onResumeSession, resuming, res
             </div>
 
             <p style={{ textAlign: 'center', fontSize: '0.8rem', color: 'var(--color-text-muted)', marginTop: 24 }}>
-              Both paths follow the same {motion === 'pro-services' ? 'five' : 'six'}-step discovery process.
+              Both paths follow the same {motion === 'pro-services' ? 'five' : motion === 'ordering' ? 'three' : 'five'}-step process.
               You can start a new engagement at any time to switch modes.
             </p>
           </>

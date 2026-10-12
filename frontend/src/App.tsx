@@ -7,7 +7,6 @@ import { DiscoveryModeSelector } from './components/DiscoveryModeSelector';
 import { Step1_CustomerProfile } from './components/steps/Step1_CustomerProfile';
 import { Step2_ReadinessGate, GATE_QUESTIONS } from './components/steps/Step2_ReadinessGate';
 import { Step3_DeploymentModel } from './components/steps/Step3_DeploymentModel';
-import { Step4_EngagementTriggers } from './components/steps/Step4_EngagementTriggers';
 import { Step5_FirstArticle } from './components/steps/Step5_FirstArticle';
 import { Step6_RoadmapOutput } from './components/steps/Step6_RoadmapOutput';
 import { EarlyExitScreen } from './components/EarlyExitScreen';
@@ -17,9 +16,12 @@ import { PsStep3_ConfigStatus } from './components/proServices/PsStep3_ConfigSta
 import { PsStep4_Complexity } from './components/proServices/PsStep4_Complexity';
 import { PsStep5_Outputs } from './components/proServices/PsStep5_Outputs';
 import { psCompletedSteps } from './components/proServices/psConfig';
+import { OrderStep1_Profile } from './components/ordering/OrderStep1_Profile';
+import { OrderStep2_Engagement } from './components/ordering/OrderStep2_Engagement';
+import { OrderStep3_Summary } from './components/ordering/OrderStep3_Summary';
 import { useMotionState } from './hooks/useMotionState';
 import { useTheme } from './hooks/useTheme';
-import { isFieldAnswered, PS_STEP_LABELS, STEP_LABELS } from './types';
+import { isFieldAnswered, ORDER_STEP_LABELS, PS_STEP_LABELS, STEP_LABELS } from './types';
 import { loeBlockers } from './utils/psLoe';
 import { saveSession, loadSession } from './utils/sessionApi';
 
@@ -102,6 +104,31 @@ export default function App() {
       return psCompletedSteps(customerProfile, proServices, uv, loeBlockers(proServices, uv).length > 0);
     }
 
+    if (motion === 'ordering') {
+      const completed = new Set<number>();
+      if (
+        customerProfile.customerName.trim() &&
+        customerProfile.opportunityNumber.trim() &&
+        customerProfile.saName.trim() &&
+        customerProfile.sellerName.trim()
+      ) completed.add(1);
+      if (
+        answered(engagementTriggers.customerItPocConfirmed, 'engagementTriggers.customerItPocConfirmed') &&
+        answered(engagementTriggers.tscAlignmentScheduled, 'engagementTriggers.tscAlignmentScheduled') &&
+        answered(engagementTriggers.cloudServicesEngaged, 'engagementTriggers.cloudServicesEngaged') &&
+        answered(engagementTriggers.deviceImportMethod, 'engagementTriggers.deviceImportMethod') &&
+        answered(engagementTriggers.enrollmentHandledBy, 'engagementTriggers.enrollmentHandledBy') &&
+        answered(engagementTriggers.shipToLocation, 'engagementTriggers.shipToLocation') &&
+        (!engagementTriggers.shipToLocation.includes('home') ||
+          answered(engagementTriggers.adultSignatureRequired, 'engagementTriggers.adultSignatureRequired')) &&
+        answered(engagementTriggers.assetTagsBiosCustomPackaging, 'engagementTriggers.assetTagsBiosCustomPackaging')
+      ) completed.add(2);
+      // Step 3 is the summary — always accessible once step 2 is done, but mark complete when printed
+      // (no explicit completion flag; treat as reachable always)
+      return completed;
+    }
+
+    // provisioning motion
     const completed = new Set<number>();
 
     if (
@@ -135,20 +162,8 @@ export default function App() {
       answered(deploymentRecommendation.hardwareModelsValidated, 'deploymentRecommendation.hardwareModelsValidated')
     ) completed.add(3);
 
-    if (
-      answered(engagementTriggers.customerItPocConfirmed, 'engagementTriggers.customerItPocConfirmed') &&
-      answered(engagementTriggers.tscAlignmentScheduled, 'engagementTriggers.tscAlignmentScheduled') &&
-      answered(engagementTriggers.cloudServicesEngaged, 'engagementTriggers.cloudServicesEngaged') &&
-      answered(engagementTriggers.deviceImportMethod, 'engagementTriggers.deviceImportMethod') &&
-      answered(engagementTriggers.enrollmentHandledBy, 'engagementTriggers.enrollmentHandledBy') &&
-      answered(engagementTriggers.shipToLocation, 'engagementTriggers.shipToLocation') &&
-      (!engagementTriggers.shipToLocation.includes('home') ||
-        answered(engagementTriggers.adultSignatureRequired, 'engagementTriggers.adultSignatureRequired')) &&
-      answered(engagementTriggers.assetTagsBiosCustomPackaging, 'engagementTriggers.assetTagsBiosCustomPackaging')
-    ) completed.add(4);
-
-    if (firstArticle.required !== null) completed.add(5);
-    if (roadmapOutput.steps.length > 0) completed.add(6);
+    if (firstArticle.required !== null) completed.add(4);
+    if (roadmapOutput.steps.length > 0) completed.add(5);
 
     return completed;
   }, [state]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -223,7 +238,7 @@ export default function App() {
       <ThemeSwitcher theme={theme} onChange={setTheme} />
       <Sidebar
         motion={motion}
-        stepLabels={motion === 'pro-services' ? PS_STEP_LABELS : STEP_LABELS}
+        stepLabels={motion === 'pro-services' ? PS_STEP_LABELS : motion === 'ordering' ? ORDER_STEP_LABELS : STEP_LABELS}
         currentStep={currentStep}
         completedSteps={completedSteps}
         discoveryMode={discoveryMode}
@@ -255,6 +270,36 @@ export default function App() {
                 state={state}
                 onEnsureSession={() => saveSessionForPrint(false)}
                 onUpdateLoe={updateLoe}
+                onReset={reset}
+                onEditStep={editStep}
+              />
+            )}
+          </>
+        ) : motion === 'ordering' ? (
+          <>
+            {currentStep === 1 && (
+              <OrderStep1_Profile
+                profile={customerProfile}
+                discoveryMode={discoveryMode}
+                onUpdate={updateCustomerProfile}
+                onNext={nextStep}
+              />
+            )}
+            {currentStep === 2 && (
+              <OrderStep2_Engagement
+                discoveryMode={discoveryMode}
+                unvalidatedFields={uv}
+                triggers={engagementTriggers}
+                onUpdate={updateEngagementTriggers}
+                onMarkUnvalidated={markUnvalidated}
+                onClearUnvalidated={clearUnvalidated}
+                onNext={nextStep}
+              />
+            )}
+            {currentStep === 3 && (
+              <OrderStep3_Summary
+                state={state}
+                onEnsureSession={() => saveSessionForPrint(false)}
                 onReset={reset}
                 onEditStep={editStep}
               />
@@ -307,18 +352,6 @@ export default function App() {
               />
             )}
             {currentStep === 4 && (
-              <Step4_EngagementTriggers
-                profile={customerProfile}
-                discoveryMode={discoveryMode}
-                unvalidatedFields={uv}
-                triggers={engagementTriggers}
-                onUpdate={updateEngagementTriggers}
-                onMarkUnvalidated={markUnvalidated}
-                onClearUnvalidated={clearUnvalidated}
-                onNext={nextStep}
-              />
-            )}
-            {currentStep === 5 && (
               <Step5_FirstArticle
                 profile={customerProfile}
                 discoveryMode={discoveryMode}
@@ -331,7 +364,7 @@ export default function App() {
                 onNext={nextStep}
               />
             )}
-            {currentStep === 6 && (
+            {currentStep === 5 && (
               <Step6_RoadmapOutput
                 state={state}
                 onEnsureSession={() => saveSessionForPrint(false)}

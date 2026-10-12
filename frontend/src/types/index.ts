@@ -1,6 +1,6 @@
 export type DiscoveryMode = 'live' | 'validation';
 // Which sales motion the session runs. Sessions saved before motions existed are 'provisioning'.
-export type SalesMotion = 'provisioning' | 'pro-services';
+export type SalesMotion = 'provisioning' | 'pro-services' | 'ordering';
 
 export type Industry =
   | 'healthcare'
@@ -280,9 +280,14 @@ export const STEP_LABELS: Record<number, string> = {
   1: 'Technical Discovery',
   2: 'Readiness Gate',
   3: 'Deployment Model',
-  4: 'Engagement Triggers',
-  5: 'First Article',
-  6: 'Roadmap Output',
+  4: 'First Article',
+  5: 'Roadmap Output',
+};
+
+export const ORDER_STEP_LABELS: Record<number, string> = {
+  1: 'Customer Profile',
+  2: 'Ordering & Enrollment',
+  3: 'Order Summary',
 };
 
 export const PS_STEP_LABELS: Record<number, string> = {
@@ -296,6 +301,7 @@ export const PS_STEP_LABELS: Record<number, string> = {
 export const MOTION_LABELS: Record<SalesMotion, string> = {
   'provisioning': 'Provisioning Motion',
   'pro-services': 'Autopilot/Intune Pro Services Discovery',
+  'ordering': 'Ordering & Enrollment',
 };
 
 export function isFieldAnswered(value: unknown, fieldKey: string, unvalidatedFields: string[]): boolean {
