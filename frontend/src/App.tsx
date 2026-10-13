@@ -38,7 +38,6 @@ export default function App() {
     updateCustomerProfile,
     updateReadinessCheck,
     updateDeploymentRecommendation,
-    updateEngagementTriggers,
     updateFirstArticle,
     updateRoadmap,
     updateProServices,
