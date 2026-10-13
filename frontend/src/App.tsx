@@ -16,12 +16,12 @@ import { PsStep3_ConfigStatus } from './components/proServices/PsStep3_ConfigSta
 import { PsStep4_Complexity } from './components/proServices/PsStep4_Complexity';
 import { PsStep5_Outputs } from './components/proServices/PsStep5_Outputs';
 import { psCompletedSteps } from './components/proServices/psConfig';
-import { OrderStep1_Profile } from './components/ordering/OrderStep1_Profile';
-import { OrderStep2_Engagement } from './components/ordering/OrderStep2_Engagement';
-import { OrderStep3_Summary } from './components/ordering/OrderStep3_Summary';
+import { FaStep1_Profile } from './components/firstArticle/FaStep1_Profile';
+import { FaStep2_Intake } from './components/firstArticle/FaStep2_Intake';
+import { FaStep3_Output } from './components/firstArticle/FaStep3_Output';
 import { useMotionState } from './hooks/useMotionState';
 import { useTheme } from './hooks/useTheme';
-import { isFieldAnswered, ORDER_STEP_LABELS, PS_STEP_LABELS, STEP_LABELS } from './types';
+import { isFieldAnswered, FA_STEP_LABELS, PS_STEP_LABELS, STEP_LABELS } from './types';
 import { loeBlockers } from './utils/psLoe';
 import { saveSession, loadSession } from './utils/sessionApi';
 
@@ -43,6 +43,7 @@ export default function App() {
     updateRoadmap,
     updateProServices,
     updateLoe,
+    updateFaIntake,
     reset,
     editStep,
     setSessionMeta,
@@ -52,7 +53,7 @@ export default function App() {
   const {
     currentStep, motion, discoveryMode, unvalidatedFields,
     customerProfile, readinessCheck, deploymentRecommendation,
-    engagementTriggers, firstArticle, roadmapOutput, proServices,
+    engagementTriggers, firstArticle, roadmapOutput, proServices, faMotion,
     sessionCode, lastSavedAt,
   } = state;
 
@@ -104,7 +105,7 @@ export default function App() {
       return psCompletedSteps(customerProfile, proServices, uv, loeBlockers(proServices, uv).length > 0);
     }
 
-    if (motion === 'ordering') {
+    if (motion === 'first-article') {
       const completed = new Set<number>();
       if (
         customerProfile.customerName.trim() &&
@@ -112,19 +113,30 @@ export default function App() {
         customerProfile.saName.trim() &&
         customerProfile.sellerName.trim()
       ) completed.add(1);
+
+      // Step 2 is complete when the intake has the minimum required fields answered
+      // (use the same logic as faIntakeComplete but inline to avoid the import cycle)
+      const fa = faMotion.intake;
+      const faUv = (name: string) => uv.includes(`faIntake.${name}`);
+      const faAnswered = (val: unknown, name: string) => val !== null && val !== undefined || faUv(name);
       if (
-        answered(engagementTriggers.customerItPocConfirmed, 'engagementTriggers.customerItPocConfirmed') &&
-        answered(engagementTriggers.tscAlignmentScheduled, 'engagementTriggers.tscAlignmentScheduled') &&
-        answered(engagementTriggers.cloudServicesEngaged, 'engagementTriggers.cloudServicesEngaged') &&
-        answered(engagementTriggers.deviceImportMethod, 'engagementTriggers.deviceImportMethod') &&
-        answered(engagementTriggers.enrollmentHandledBy, 'engagementTriggers.enrollmentHandledBy') &&
-        answered(engagementTriggers.shipToLocation, 'engagementTriggers.shipToLocation') &&
-        (!engagementTriggers.shipToLocation.includes('home') ||
-          answered(engagementTriggers.adultSignatureRequired, 'engagementTriggers.adultSignatureRequired')) &&
-        answered(engagementTriggers.assetTagsBiosCustomPackaging, 'engagementTriggers.assetTagsBiosCustomPackaging')
+        fa.environmentOperational === true &&
+        faAnswered(fa.registrationOwner, 'registrationOwner') &&
+        (fa.hardwareModel.trim() || faUv('hardwareModel')) &&
+        (fa.deviceSku.trim() || faUv('deviceSku')) &&
+        (fa.deviceQuantity.trim() || faUv('deviceQuantity')) &&
+        faAnswered(fa.zonesAuthorizationCompleted, 'zonesAuthorizationCompleted') &&
+        faAnswered(fa.provisioningType, 'provisioningType') &&
+        (fa.acceptanceDefinition.trim() || faUv('acceptanceDefinition')) &&
+        faAnswered(fa.currentRuntime, 'currentRuntime') &&
+        (fa.runtimeSources.length > 0 || faUv('runtimeSources')) &&
+        (fa.testerContact.trim() || faUv('testerContact')) &&
+        (fa.approverContact.trim() || faUv('approverContact')) &&
+        faAnswered(fa.customerHasExistingInstructions, 'customerHasExistingInstructions')
       ) completed.add(2);
-      // Step 3 is the summary — always accessible once step 2 is done, but mark complete when printed
-      // (no explicit completion flag; treat as reachable always)
+
+      // Step 3 is the FA Definition output — reachable once step 2 is complete
+      if (completed.has(2)) completed.add(3);
       return completed;
     }
 
@@ -238,7 +250,7 @@ export default function App() {
       <ThemeSwitcher theme={theme} onChange={setTheme} />
       <Sidebar
         motion={motion}
-        stepLabels={motion === 'pro-services' ? PS_STEP_LABELS : motion === 'ordering' ? ORDER_STEP_LABELS : STEP_LABELS}
+        stepLabels={motion === 'pro-services' ? PS_STEP_LABELS : motion === 'first-article' ? FA_STEP_LABELS : STEP_LABELS}
         currentStep={currentStep}
         completedSteps={completedSteps}
         discoveryMode={discoveryMode}
@@ -275,10 +287,10 @@ export default function App() {
               />
             )}
           </>
-        ) : motion === 'ordering' ? (
+        ) : motion === 'first-article' ? (
           <>
             {currentStep === 1 && (
-              <OrderStep1_Profile
+              <FaStep1_Profile
                 profile={customerProfile}
                 discoveryMode={discoveryMode}
                 onUpdate={updateCustomerProfile}
@@ -286,18 +298,18 @@ export default function App() {
               />
             )}
             {currentStep === 2 && (
-              <OrderStep2_Engagement
+              <FaStep2_Intake
+                intake={faMotion.intake}
                 discoveryMode={discoveryMode}
                 unvalidatedFields={uv}
-                triggers={engagementTriggers}
-                onUpdate={updateEngagementTriggers}
+                onUpdate={updateFaIntake}
                 onMarkUnvalidated={markUnvalidated}
                 onClearUnvalidated={clearUnvalidated}
                 onNext={nextStep}
               />
             )}
             {currentStep === 3 && (
-              <OrderStep3_Summary
+              <FaStep3_Output
                 state={state}
                 onEnsureSession={() => saveSessionForPrint(false)}
                 onReset={reset}

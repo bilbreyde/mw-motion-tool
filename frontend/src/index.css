@@ -1805,3 +1805,132 @@ textarea.text-input { resize: vertical; font-family: var(--font-sans); }
   .sidebar { display: none; }
   .step-container { padding: 24px 16px; }
 }
+
+/* ── First Article Intake form helpers ────────────────────────────────────── */
+.form-hint {
+  font-size: 0.82rem;
+  color: var(--color-text-muted);
+  margin: 4px 0 12px;
+  line-height: 1.5;
+}
+
+.form-sublabel {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 6px;
+}
+
+.radio-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.radio-group--vertical {
+  flex-direction: column;
+  gap: 6px;
+}
+
+.radio-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 14px;
+  background: var(--color-bg-secondary);
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-md);
+  color: var(--color-text-secondary);
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all var(--transition);
+  line-height: 1.4;
+  min-width: 80px;
+}
+
+.radio-option input[type="radio"] {
+  margin-top: 2px;
+  flex-shrink: 0;
+  accent-color: var(--color-accent);
+}
+
+.radio-option:hover {
+  border-color: var(--color-accent);
+  color: var(--color-text-primary);
+}
+
+.radio-option--selected {
+  border-color: var(--color-accent);
+  background: var(--color-accent-dim);
+  color: var(--color-text-primary);
+}
+
+.radio-option--unvalidated.radio-option--selected {
+  border-color: var(--color-warning);
+  background: var(--color-warning-dim);
+  color: var(--color-text-primary);
+}
+
+.checkbox-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.checkbox-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  background: var(--color-bg-secondary);
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-md);
+  color: var(--color-text-secondary);
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all var(--transition);
+}
+
+.checkbox-option input[type="checkbox"] {
+  accent-color: var(--color-accent);
+}
+
+.checkbox-option:hover {
+  border-color: var(--color-accent);
+  color: var(--color-text-primary);
+}
+
+.checkbox-option--selected {
+  border-color: var(--color-accent);
+  background: var(--color-accent-dim);
+  color: var(--color-text-primary);
+}
+
+.checkbox-option--unvalidated.checkbox-option--selected {
+  border-color: var(--color-warning);
+  background: var(--color-warning-dim);
+  color: var(--color-text-primary);
+}
+
+/* ── FA Definition print feedback lines ──────────────────────────────────── */
+.print-feedback-line {
+  display: block;
+  height: 1px;
+  background: var(--color-border);
+  margin: 10px 0 4px;
+  min-width: 200px;
+}
+
+@media print {
+  .print-feedback-line {
+    background: #AAAAAA;
+  }
+  .radio-option input,
+  .checkbox-option input {
+    display: none;
+  }
+}

@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import type {
   MotionState, DiscoveryMode, SalesMotion, CustomerProfile, ReadinessCheck, DeploymentRecommendation,
-  EngagementTriggers, FirstArticle, ProServicesState, PsLoeEstimate,
+  EngagementTriggers, FirstArticle, ProServicesState, PsLoeEstimate, FaMotionState,
 } from '../types';
 
 // Questions removed from the tool; sessions saved earlier may still flag them as unvalidated.
@@ -52,9 +52,34 @@ const initialProServices: ProServicesState = {
 
 function lastStepFor(motion: SalesMotion): number {
   if (motion === 'pro-services') return 5;
-  if (motion === 'ordering') return 3;
+  if (motion === 'first-article') return 3;
   return 5; // provisioning
 }
+
+const initialFaMotion: FaMotionState = {
+  intake: {
+    environmentOperational: null,
+    registrationOwner: null,
+    hardwareModel: '',
+    deviceSku: '',
+    operatingSystem: '',
+    deviceQuantity: '',
+    zonesAuthorizationCompleted: null,
+    globalAdminContact: '',
+    autopilotProfile: '',
+    groupTag: '',
+    provisioningType: null,
+    mustCompleteBeforeShipment: '',
+    acceptanceDefinition: '',
+    currentRuntime: null,
+    runtimeSources: [],
+    additionalTscServices: [],
+    testerContact: '',
+    approverContact: '',
+    customerHasExistingInstructions: null,
+    existingInstructionsNotes: '',
+  },
+};
 
 const initialState: MotionState = {
   currentStep: 1,
@@ -146,6 +171,7 @@ const initialState: MotionState = {
     loading: false,
   },
   proServices: initialProServices,
+  faMotion: initialFaMotion,
   sessionCode: null,
   lastSavedAt: null,
   editReturnStep: null,
@@ -255,6 +281,20 @@ export function useMotionState() {
     }));
   }, []);
 
+  const updateFaMotion = useCallback((updates: Partial<FaMotionState>) => {
+    setState(prev => ({
+      ...prev,
+      faMotion: { ...prev.faMotion, ...updates },
+    }));
+  }, []);
+
+  const updateFaIntake = useCallback((updates: Partial<FaMotionState['intake']>) => {
+    setState(prev => ({
+      ...prev,
+      faMotion: { ...prev.faMotion, intake: { ...prev.faMotion.intake, ...updates } },
+    }));
+  }, []);
+
   const reset = useCallback(() => setState(initialState), []);
 
   const setSessionMeta = useCallback((updates: { sessionCode?: string | null; lastSavedAt?: string | null }) => {
@@ -263,6 +303,7 @@ export function useMotionState() {
 
   const loadState = useCallback((loaded: MotionState, sessionCode: string, updatedAt: string) => {
     const ps = loaded.proServices;
+    const fa = loaded.faMotion;
     setState({
       ...loaded,
       motion: loaded.motion ?? 'provisioning',
@@ -271,6 +312,11 @@ export function useMotionState() {
         ...ps,
         configStatus: { ...initialProServices.configStatus, ...ps?.configStatus },
         loe: { ...initialLoe, ...ps?.loe, loading: false },
+      },
+      faMotion: {
+        ...initialFaMotion,
+        ...fa,
+        intake: { ...initialFaMotion.intake, ...fa?.intake },
       },
       unvalidatedFields: loaded.unvalidatedFields.filter(k => !RETIRED_FIELD_KEYS.has(k)),
       sessionCode,
@@ -298,6 +344,8 @@ export function useMotionState() {
     updateRoadmap,
     updateProServices,
     updateLoe,
+    updateFaMotion,
+    updateFaIntake,
     reset,
     setSessionMeta,
     loadState,

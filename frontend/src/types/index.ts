@@ -1,6 +1,6 @@
 export type DiscoveryMode = 'live' | 'validation';
 // Which sales motion the session runs. Sessions saved before motions existed are 'provisioning'.
-export type SalesMotion = 'provisioning' | 'pro-services' | 'ordering';
+export type SalesMotion = 'provisioning' | 'pro-services' | 'first-article';
 
 export type Industry =
   | 'healthcare'
@@ -137,6 +137,69 @@ export interface FirstArticle {
   loading: boolean;
 }
 
+// ── First Article Motion types ────────────────────────────────────────────────
+export type FaRegistrationOwner = 'oem' | 'zones' | 'customer' | 'unknown';
+export type FaProvisioningType = 'provisioning' | 'pre-provisioning' | 'evaluate-both';
+export type FaCurrentRuntime = 'under-15' | '16-30' | '31-90-plus' | 'unknown';
+export type FaRuntimeSource =
+  | 'apps' | 'security' | 'policies' | 'updates' | 'drivers' | 'restarts' | 'unknown';
+
+export interface FaIntake {
+  // Q1 — entry gate
+  environmentOperational: boolean | null;
+
+  // Q2 — registration owner
+  registrationOwner: FaRegistrationOwner | null;
+
+  // Q3 — hardware / device details
+  hardwareModel: string;
+  deviceSku: string;
+  operatingSystem: string;
+  deviceQuantity: string;
+
+  // Q4 — Zones authorization
+  zonesAuthorizationCompleted: boolean | null;
+
+  // Q5 — Global Admin contact
+  globalAdminContact: string;
+
+  // Q6 — Autopilot profile and Group Tag
+  autopilotProfile: string;
+  groupTag: string;
+
+  // Q7 — provisioning type
+  provisioningType: FaProvisioningType | null;
+
+  // Q8 — must-complete-before-shipment items
+  mustCompleteBeforeShipment: string;
+
+  // Q9 — acceptance definition
+  acceptanceDefinition: string;
+
+  // Q10 — current provisioning runtime
+  currentRuntime: FaCurrentRuntime | null;
+
+  // Q11 — runtime source (multi-select)
+  runtimeSources: FaRuntimeSource[];
+
+  // Q12 — additional TSC services (multi-select free-text)
+  additionalTscServices: string[];
+
+  // Q13 — tester contact
+  testerContact: string;
+
+  // Q14 — approver contact
+  approverContact: string;
+
+  // Q15 — customer can provide existing instructions
+  customerHasExistingInstructions: boolean | null;
+  existingInstructionsNotes: string;
+}
+
+export interface FaMotionState {
+  intake: FaIntake;
+}
+
 export interface RoadmapStep {
   id: string;
   phase: string;
@@ -228,10 +291,11 @@ export interface MotionState {
   firstArticle: FirstArticle;
   roadmapOutput: RoadmapOutput;
   proServices: ProServicesState;
+  faMotion: FaMotionState;
   sessionCode: string | null;
   lastSavedAt: string | null;
-  // Set when the SA jumps back to an earlier step to edit an answer from Step 6.
-  // nextStep() returns here instead of advancing, and roadmap/LOE regeneration is forced.
+  // Set when the SA jumps back to an earlier step to edit an answer from Step 3 (FA output).
+  // nextStep() returns here instead of advancing.
   editReturnStep: number | null;
 }
 
@@ -284,10 +348,10 @@ export const STEP_LABELS: Record<number, string> = {
   5: 'Roadmap Output',
 };
 
-export const ORDER_STEP_LABELS: Record<number, string> = {
+export const FA_STEP_LABELS: Record<number, string> = {
   1: 'Customer Profile',
-  2: 'Ordering & Enrollment',
-  3: 'Order Summary',
+  2: 'First Article Intake',
+  3: 'FA Definition',
 };
 
 export const PS_STEP_LABELS: Record<number, string> = {
@@ -301,7 +365,7 @@ export const PS_STEP_LABELS: Record<number, string> = {
 export const MOTION_LABELS: Record<SalesMotion, string> = {
   'provisioning': 'Provisioning Motion',
   'pro-services': 'Autopilot/Intune Pro Services Discovery',
-  'ordering': 'Ordering & Enrollment',
+  'first-article': 'First Article Motion',
 };
 
 export function isFieldAnswered(value: unknown, fieldKey: string, unvalidatedFields: string[]): boolean {
